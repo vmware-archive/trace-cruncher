@@ -41,7 +41,9 @@ https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/snapshot/trace-cmd-
 
     cd path/to/trace-cmd/
 
-    git am ../path/to/kshark-py/0001-kernel-shark-Add-_DEVEL-build-flag.patch
+    git am ../path/to/trace-cruncher/0001-kernel-shark-Add-_DEVEL-build-flag.patch
+
+    git am ../path/to/trace-cruncher/0002-kernel-shark-Add-reg_pid-plugin.patch
 
 2. Install trace-cmd:
 
