@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-""" The license to be determined !!!!
-
-Copyright (C) 2019 VMware Inc, Yordan Karadzhov <ykaradzhov@vmware.com>
+"""
+Copyright 2019 VMware Inc, Yordan Karadzhov <ykaradzhov@vmware.com>
 """
 
 import os
