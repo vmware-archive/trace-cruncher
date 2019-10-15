@@ -16,15 +16,20 @@ Trace-Cruncher has the following external dependencies:
   trace-cmd / KernelShark, Json-C, Cython, NumPy, MatPlotLib.
 
 1.1 In order to install the packages on Ubuntu do the following:
+
     sudo apt-get install libjson-c-dev libpython3-dev cython3 -y
+
     sudo apt-get install python3-numpy python3-matplotlib -y
 
 1.2 In order to install the packages on Fedora, as root do the following:
+
     dnf install json-c-devel python3-devel python3-Cython -y
+
     dnf install python3-numpy python3-matplotlib -y
 
 2. In order to get the proper version of KernelShark / trace-cmd do the
 following:
+
     git clone git://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git --branch=kernelshark-v1.1
 
 or download a tarball from here:
@@ -33,21 +38,31 @@ https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/snapshot/trace-cmd-
 ### Build & Run
 
 1. Patch trace-cmd / KernelShark:
+
     cd path/to/trace-cmd/
+
     git am ../path/to/kshark-py/0001-kernel-shark-Add-_DEVEL-build-flag.patch
 
 2. Install trace-cmd:
+
     make
+
     sudo make install_libs
 
 3. Install KernelShark:
+
     cd kernel-shark/build
+
     cmake -D_DEVEL=1 ../
+
     make
+
     sudo make install
 
 4. Build the NumPy API itself:
+
     cd path/to/trace-cruncher
+
     ./np_setup.py build_ext -i
 
 ## Documentation
