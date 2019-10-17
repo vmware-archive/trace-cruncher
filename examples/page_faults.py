@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 """
+SPDX-License-Identifier: LGPL-2.1
+
 Copyright 2019 VMware Inc, Yordan Karadzhov <ykaradzhov@vmware.com>
 """
 
