@@ -258,7 +258,7 @@ def load_data(ofst_data=True, cpu_data=True,
 
     if cpu_data:
         array_wrapper_cpu = KsDataWrapper()
-        array_wrapper_cpu.init(data_type=np.NPY_UINT8,
+        array_wrapper_cpu.init(data_type=np.NPY_UINT16,
                                data_size=size,
                                item_size=0,
                                data_ptr=<void *> cpu_c)
