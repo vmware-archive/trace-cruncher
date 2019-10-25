@@ -61,8 +61,6 @@ size_t kspy_get_tasks(int **pids, char ***names)
 
 	for (i = 0; i < n; ++i) {
 		comm = tep_data_comm_from_pid(kshark_ctx->pevent, (*pids)[i]);
-		if (i == 191)
-			printf("pid: %i  comm: %s\n", (*pids)[i], comm);
 		ret = asprintf(&(*names)[i], "%s", comm);
 		if (ret < 1)
 			goto fail;
