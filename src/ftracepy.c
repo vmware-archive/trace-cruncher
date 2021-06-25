@@ -269,6 +269,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Check if kprobe event is enabled."
 	},
+	{"set_ftrace_loglevel",
+	 (PyCFunction) PyFtrace_set_ftrace_loglevel,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Set the verbose level of the ftrace libraries."
+	},
 	{"trace_process",
 	 (PyCFunction) PyFtrace_trace_process,
 	 METH_VARARGS | METH_KEYWORDS,

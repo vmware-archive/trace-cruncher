@@ -1801,6 +1801,32 @@ PyObject *PyFtrace_kprobe_is_enabled(PyObject *self, PyObject *args,
 	return event_is_enabled(instance, TC_SYS, event);
 }
 
+PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
+						       PyObject *kwargs)
+{
+	static char *kwlist[] = {"level", NULL};
+	int level;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "i",
+					 kwlist,
+					 &level)) {
+		return NULL;
+	}
+
+	if (level > TEP_LOG_ALL)
+		level = TEP_LOG_ALL;
+
+	if (level < 0)
+		level = 0;
+
+	tracefs_set_loglevel(level);
+	tep_set_loglevel(level);
+
+	Py_RETURN_NONE;
+}
+
 static bool set_fork_options(struct tracefs_instance *instance, bool enable)
 {
 	if (enable) {
