@@ -11,6 +11,15 @@ import ctypes
 from . import ftracepy as ft
 
 
+def local_tep():
+    """ Get the "tep" event of the current system (local).
+    """
+    tep = ft.tep_handle();
+    tep.init_local(dir=ft.dir());
+
+    return tep
+
+
 def find_event_id(system, event):
     """ Get the unique identifier of a trace event.
     """
