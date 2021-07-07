@@ -214,6 +214,26 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Gat a list of all supported options."
 	},
+	{"trace_process",
+	 (PyCFunction) PyFtrace_trace_process,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Trace a process."
+	},
+	{"trace_shell_process",
+	 (PyCFunction) PyFtrace_trace_shell_process,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Trace a process executed within a shell."
+	},
+	{"read_trace",
+	 (PyCFunction) PyFtrace_read_trace,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Trace a shell process."
+	},
+	{"iterate_trace",
+	 (PyCFunction) PyFtrace_iterate_trace,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Trace a shell process."
+	},
 	{"hook2pid",
 	 (PyCFunction) PyFtrace_hook2pid,
 	 METH_VARARGS | METH_KEYWORDS,

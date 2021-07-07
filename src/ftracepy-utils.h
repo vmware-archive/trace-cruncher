@@ -125,6 +125,18 @@ PyObject *PyFtrace_supported_options(PyObject *self, PyObject *args,
 PyObject *PyFtrace_enabled_options(PyObject *self, PyObject *args,
 						   PyObject *kwargs);
 
+PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
+						 PyObject *kwargs);
+
+PyObject *PyFtrace_trace_shell_process(PyObject *self, PyObject *args,
+						       PyObject *kwargs);
+
+PyObject *PyFtrace_read_trace(PyObject *self, PyObject *args,
+					      PyObject *kwargs);
+
+PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
+						 PyObject *kwargs);
+
 PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs);
 
 void PyFtrace_at_exit(void);

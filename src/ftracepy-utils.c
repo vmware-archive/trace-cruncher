@@ -1507,6 +1507,335 @@ static bool hook2pid(struct tracefs_instance *instance, PyObject *pid_val, int f
 	return false;
 }
 
+static void start_tracing_procces(struct tracefs_instance *instance,
+				  char *const *argv,
+				  char *const *envp)
+{
+	PyObject *pid_val = PyList_New(1);
+
+	PyList_SET_ITEM(pid_val, 0, PyLong_FromLong(getpid()));
+	if (!hook2pid(instance, pid_val, true))
+		exit(1);
+
+	tracing_ON(instance);
+	if (execvpe(argv[0], argv, envp) < 0) {
+		PyErr_Format(TFS_ERROR, "Failed to exec \'%s\'",
+			     argv[0]);
+	}
+
+	exit(1);
+}
+
+static PyObject *get_callback_func(const char *plugin_name, const char * py_callback)
+{
+	PyObject *py_name, *py_module, *py_func;
+
+	py_name = PyUnicode_FromString(plugin_name);
+	py_module = PyImport_Import(py_name);
+	if (!py_module) {
+		PyErr_Format(TFS_ERROR, "Failed to import plugin \'%s\'",
+			     plugin_name);
+		return NULL;
+	}
+
+	py_func = PyObject_GetAttrString(py_module, py_callback);
+	if (!py_func || !PyCallable_Check(py_func)) {
+		PyErr_Format(TFS_ERROR,
+			     "Failed to import callback from plugin \'%s\'",
+			     plugin_name);
+		return NULL;
+	}
+
+	return py_func;
+}
+
+struct callback_context {
+	void	*py_callback;
+
+	bool	status;
+} callback_ctx;
+
+static int callback(struct tep_event *event, struct tep_record *record,
+		    int cpu, void *ctx_ptr)
+{
+	struct callback_context *ctx = ctx_ptr;
+	PyObject *ret;
+
+	record->cpu = cpu; // Remove when the bug in libtracefs is fixed.
+
+	PyObject *py_tep_event = PyTepEvent_New(event);
+	PyObject *py_tep_record = PyTepRecord_New(record);
+
+	PyObject *arglist = PyTuple_New(2);
+	PyTuple_SetItem(arglist, 0, py_tep_event);
+	PyTuple_SetItem(arglist, 1, py_tep_record);
+
+	ret = PyObject_CallObject((PyObject *)ctx->py_callback, arglist);
+	Py_DECREF(arglist);
+
+	if (ret) {
+		Py_DECREF(ret);
+	} else {
+		if (PyErr_Occurred()) {
+			if (PyErr_ExceptionMatches(PyExc_SystemExit)) {
+				PyErr_Clear();
+			} else {
+				PyErr_Print();
+			}
+		}
+
+		ctx->status = false;
+	}
+
+	return 0;
+}
+
+static bool notrace_this_pid(struct tracefs_instance *instance)
+{
+	int pid = getpid();
+
+	if (!pid2file(instance, "set_ftrace_notrace_pid", pid, true) ||
+	    !pid2file(instance, "set_event_notrace_pid", pid, true)) {
+		PyErr_SetString(TFS_ERROR,
+			        "Failed to desable tracing for \'this\' process.");
+		return false;
+	}
+
+	return true;
+}
+
+static void iterate_raw_events_waitpid(struct tracefs_instance *instance,
+				       struct tep_handle *tep,
+				       PyObject *py_func,
+				       pid_t pid)
+{
+	callback_ctx.py_callback = py_func;
+	do {
+		tracefs_iterate_raw_events(tep, instance, NULL, 0,
+					   callback, &callback_ctx);
+	} while (waitpid(pid, NULL, WNOHANG) != pid);
+}
+
+static bool init_callback_tep(struct tracefs_instance *instance,
+			      const char *plugin,
+			      const char *py_callback,
+			      struct tep_handle **tep,
+			      PyObject **py_func)
+{
+	*py_func = get_callback_func(plugin, py_callback);
+	if (!*py_func)
+		return false;
+
+	*tep = tracefs_local_events(tracefs_instance_get_dir(instance));
+	if (!*tep) {
+		PyErr_Format(TFS_ERROR,
+			     "Unable to get 'tep' event from instance \'%s\'.",
+			     get_instance_name(instance));
+		return false;
+	}
+
+	if (!notrace_this_pid(instance))
+		return false;
+
+	return true;
+}
+
+PyObject *PyFtrace_trace_shell_process(PyObject *self, PyObject *args,
+						       PyObject *kwargs)
+{
+	const char *plugin = "__main__", *py_callback = "callback", *instance_name;
+	static char *kwlist[] = {"process", "plugin", "callback", "instance", NULL};
+	struct tracefs_instance *instance;
+	struct tep_handle *tep;
+	PyObject *py_func;
+	char *process;
+	pid_t pid;
+
+	instance_name = NO_ARG;
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s|sss",
+					 kwlist,
+					 &process,
+					 &plugin,
+					 &py_callback,
+					 &instance_name)) {
+		return NULL;
+	}
+
+	if (!get_optional_instance(instance_name, &instance))
+		return NULL;
+
+	if (!init_callback_tep(instance, plugin, py_callback, &tep, &py_func))
+		return NULL;
+
+	pid = fork();
+	if (pid < 0) {
+		PyErr_SetString(TFS_ERROR, "Failed to fork");
+		return NULL;
+	}
+
+	if (pid == 0) {
+		char *argv[] = {getenv("SHELL"), "-c", process, NULL};
+		char *envp[] = {NULL};
+
+		start_tracing_procces(instance, argv, envp);
+	}
+
+	iterate_raw_events_waitpid(instance, tep, py_func, pid);
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
+						 PyObject *kwargs)
+{
+	const char *plugin = "__main__", *py_callback = "callback", *instance_name;
+	static char *kwlist[] = {"argv", "plugin", "callback", "instance", NULL};
+	struct tracefs_instance *instance;
+	struct tep_handle *tep;
+	PyObject *py_func, *py_argv, *py_arg;
+	pid_t pid;
+	int i, argc;
+
+	instance_name = NO_ARG;
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "O|sss",
+					 kwlist,
+					 &py_argv,
+					 &plugin,
+					 &py_callback,
+					 &instance_name)) {
+		return NULL;
+	}
+
+	if (!get_optional_instance(instance_name, &instance))
+		return NULL;
+
+	if (!init_callback_tep(instance, plugin, py_callback, &tep, &py_func))
+		return NULL;
+
+	if (!PyList_CheckExact(py_argv)) {
+		PyErr_SetString(TFS_ERROR, "Failed to parse \'argv\' list");
+		return NULL;
+	}
+
+	argc = PyList_Size(py_argv);
+
+	pid = fork();
+	if (pid < 0) {
+		PyErr_SetString(TFS_ERROR, "Failed to fork");
+		return NULL;
+	}
+
+	if (pid == 0) {
+		char *argv[argc + 1];
+		char *envp[] = {NULL};
+
+		for (i = 0; i < argc; ++i) {
+			py_arg = PyList_GetItem(py_argv, i);
+			if (!PyUnicode_Check(py_arg))
+				return NULL;
+
+			argv[i] = PyUnicode_DATA(py_arg);
+		}
+		argv[argc] = NULL;
+		start_tracing_procces(instance, argv, envp);
+	}
+
+	iterate_raw_events_waitpid(instance, tep, py_func, pid);
+
+	Py_RETURN_NONE;
+}
+
+static struct tracefs_instance *pipe_instance;
+
+static void pipe_stop(int sig)
+{
+	tracefs_trace_pipe_stop(pipe_instance);
+}
+
+PyObject *PyFtrace_read_trace(PyObject *self, PyObject *args,
+					      PyObject *kwargs)
+{
+	signal(SIGINT, pipe_stop);
+
+	if (!get_instance_from_arg(args, kwargs, &pipe_instance) ||
+	    !notrace_this_pid(pipe_instance))
+		return NULL;
+
+	tracing_ON(pipe_instance);
+	if (tracefs_trace_pipe_print(pipe_instance, 0) < 0) {
+		PyErr_Format(TFS_ERROR,
+			     "Unable to read trace data from instance \'%s\'.",
+			     get_instance_name(pipe_instance));
+		return NULL;
+	}
+
+	signal(SIGINT, SIG_DFL);
+	Py_RETURN_NONE;
+}
+
+struct tracefs_instance *itr_instance;
+static bool iterate_keep_going;
+
+static void iterate_stop(int sig)
+{
+	iterate_keep_going = false;
+	tracefs_trace_pipe_stop(itr_instance);
+}
+
+PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
+					         PyObject *kwargs)
+{
+	static char *kwlist[] = {"plugin", "callback", "instance", NULL};
+	const char *plugin = "__main__", *py_callback = "callback";
+	bool *callback_status = &callback_ctx.status;
+	bool *keep_going = &iterate_keep_going;
+
+	const char *instance_name;
+	struct tep_handle *tep;
+	PyObject *py_func;
+	int ret;
+
+	(*(volatile bool *)keep_going) = true;
+	signal(SIGINT, iterate_stop);
+
+	instance_name = NO_ARG;
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|sss",
+					 kwlist,
+					 &plugin,
+					 &py_callback,
+					 &instance_name)) {
+		return NULL;
+	}
+
+	py_func = get_callback_func(plugin, py_callback);
+	if (!py_func ||
+	    !get_optional_instance(instance_name, &itr_instance) ||
+	    !notrace_this_pid(itr_instance))
+		return NULL;
+
+	tep = tracefs_local_events(tracefs_instance_get_dir(itr_instance));
+	(*(volatile bool *)callback_status) = true;
+	callback_ctx.py_callback = py_func;
+	tracing_ON(itr_instance);
+
+	while (*(volatile bool *)keep_going) {
+		ret = tracefs_iterate_raw_events(tep, itr_instance, NULL, 0,
+						 callback, &callback_ctx);
+
+		if (*(volatile bool *)callback_status == false || ret < 0)
+			break;
+	}
+
+	signal(SIGINT, SIG_DFL);
+	Py_RETURN_NONE;
+}
+
 PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	static char *kwlist[] = {"pid", "fork", "instance", NULL};
