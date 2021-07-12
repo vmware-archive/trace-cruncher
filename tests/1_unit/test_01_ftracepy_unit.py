@@ -441,6 +441,63 @@ class OptionsTestCase(unittest.TestCase):
 
         ft.destroy_all_instances()
 
+class KprobeTestCase(unittest.TestCase):
+    def test_register_kprobe(self):
+        evt1 = 'mkdir'
+        evt1_func = 'do_mkdirat'
+        evt1_prove = 'path=+u0($arg2):ustring'
+        evt2 = 'open'
+        evt2_func = 'do_sys_openat2'
+        evt2_prove = 'file=+u0($arg2):ustring'
+
+        ft.register_kprobe(event=evt1, function=evt1_func,
+                           probe=evt1_prove)
+        all_kprobes = ft.registered_kprobes()
+        self.assertEqual(len(all_kprobes), 1)
+        self.assertTrue(evt1 in all_kprobes[0])
+        self.assertTrue(evt1_func in all_kprobes[0])
+        self.assertTrue(evt1_prove in all_kprobes[0])
+
+        ft.unregister_kprobe(event=evt1)
+        all_kprobes = ft.registered_kprobes()
+        self.assertEqual(len(all_kprobes), 0)
+
+        ft.register_kprobe(event=evt1, function=evt1_func,
+                           probe=evt1_prove)
+        ft.register_kprobe(event=evt2, function=evt2_func,
+                           probe=evt2_prove)
+        all_kprobes = ft.registered_kprobes()
+        self.assertEqual(len(all_kprobes), 2)
+        self.assertTrue(evt1 in all_kprobes[0])
+        self.assertTrue(evt1_func in all_kprobes[0])
+        self.assertTrue(evt1_prove in all_kprobes[0])
+        self.assertTrue(evt2 in all_kprobes[1])
+        self.assertTrue(evt2_func in all_kprobes[1])
+        self.assertTrue(evt2_prove in all_kprobes[1])
+
+        ft.unregister_kprobe(event='ALL')
+        all_kprobes = ft.registered_kprobes()
+        self.assertEqual(len(all_kprobes), 0)
+
+
+    def test_enable_kprobe(self):
+        evt1 = 'mkdir'
+        evt1_func = 'do_mkdirat'
+        evt1_prove = 'path=+u0($arg2):ustring'
+
+        ft.register_kprobe(event=evt1, function=evt1_func,
+                           probe=evt1_prove)
+        ft.create_instance(instance_name)
+        ft.enable_kprobe(instance=instance_name, event=evt1)
+        ret = ft.kprobe_is_enabled(instance=instance_name, event=evt1)
+        self.assertEqual(ret, '1')
+
+        ft.disable_kprobe(instance=instance_name, event=evt1)
+        ret = ft.kprobe_is_enabled(instance=instance_name, event=evt1)
+        self.assertEqual(ret, '0')
+
+        ft.unregister_kprobe(event='ALL')
+        ft.destroy_all_instances()
 
 class TracingOnTestCase(unittest.TestCase):
     def test_ON_OF(self):

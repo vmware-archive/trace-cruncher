@@ -100,6 +100,7 @@ PyObject *PyTepEvent_parse_record_field(PyTepEvent* self, PyObject *args,
 							  PyObject *kwargs)
 {
 	struct tep_format_field *field;
+	int field_offset, field_size;
 	const char *field_name;
 	PyTepRecord *record;
 
@@ -124,11 +125,24 @@ PyObject *PyTepEvent_parse_record_field(PyTepEvent* self, PyObject *args,
 		return NULL;
 	}
 
-	if (!field->size)
+	if (field->flags & TEP_FIELD_IS_DYNAMIC) {
+		unsigned long long val;
+
+		val = tep_read_number(self->ptrObj->tep,
+				      record->ptrObj->data + field->offset,
+				      field->size);
+		field_offset = val & 0xffff;
+		field_size = val >> 16;
+	} else {
+		field_offset = field->offset;
+		field_size = field->size;
+	}
+
+	if (!field_size)
 		return PyUnicode_FromString("(nil)");
 
 	if (field->flags & TEP_FIELD_IS_STRING) {
-		char *val_str = record->ptrObj->data + field->offset;
+		char *val_str = record->ptrObj->data + field_offset;
 		return PyUnicode_FromString(val_str);
 	} else if (is_number(field)) {
 		unsigned long long val;
@@ -136,7 +150,7 @@ PyObject *PyTepEvent_parse_record_field(PyTepEvent* self, PyObject *args,
 		tep_read_number_field(field, record->ptrObj->data, &val);
 		return PyLong_FromLong(val);
 	} else if (field->flags & TEP_FIELD_IS_POINTER) {
-		void *val = record->ptrObj->data + field->offset;
+		void *val = record->ptrObj->data + field_offset;
 		char ptr_string[11];
 
 		sprintf(ptr_string, "%p", val);
@@ -1058,14 +1072,33 @@ PyObject *PyFtrace_disable_events(PyObject *self, PyObject *args,
 	Py_RETURN_NONE;
 }
 
+static PyObject *event_is_enabled(struct tracefs_instance *instance,
+				  const char *system, const char *event)
+{
+	char *file, *val;
+	PyObject *ret;
+
+	if (!get_event_enable_file(instance, system, event, &file))
+		return NULL;
+
+	if (read_from_file(instance, file, &val) <= 0)
+		return NULL;
+
+	trim_new_line(val);
+	ret = PyUnicode_FromString(val);
+
+	free(file);
+	free(val);
+
+	return ret;
+}
+
 PyObject *PyFtrace_event_is_enabled(PyObject *self, PyObject *args,
 						    PyObject *kwargs)
 {
 	static char *kwlist[] = {"instance", "system", "event", NULL};
 	const char *instance_name, *system, *event;
 	struct tracefs_instance *instance;
-	char *file, *val;
-	PyObject *ret;
 
 	instance_name = system = event = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
@@ -1081,19 +1114,7 @@ PyObject *PyFtrace_event_is_enabled(PyObject *self, PyObject *args,
 	if (!get_optional_instance(instance_name, &instance))
 		return false;
 
-	if (!get_event_enable_file(instance, system, event, &file))
-		return NULL;
-
-	if (read_from_file(instance, file, &val) <= 0)
-		return NULL;
-
-	trim_new_line(val);
-	ret = PyUnicode_FromString(val);
-
-	free(file);
-	free(val);
-
-	return ret;
+	return event_is_enabled(instance, system, event);
 }
 
 PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
@@ -1470,6 +1491,314 @@ PyObject *PyFtrace_supported_options(PyObject *self, PyObject *args,
 		return NULL;
 
 	return get_option_list(instance, false);
+}
+
+static void *kprobe_root = NULL;
+
+static int kprobe_compare(const void *a, const void *b)
+{
+	const char *ca = (const char *) a;
+	const char *cb = (const char *) b;
+
+	return strcmp(ca, cb);
+}
+
+#define TC_SYS	"tcrunch"
+
+PyObject *PyFtrace_tc_event_system(PyObject *self)
+{
+	return PyUnicode_FromString(TC_SYS);
+}
+
+static int unregister_kprobe(const char *event)
+{
+	return tracefs_kprobe_clear_probe(TC_SYS, event, true);
+}
+
+void kprobe_free(void *kp)
+{
+	char *event = kp;
+
+	if (unregister_kprobe(event) < 0)
+		fprintf(stderr, "\ntfs_error: Failed to unregister kprobe \'%s\'.\n",
+		        event);
+
+	free(kp);
+}
+
+static void destroy_all_kprobes(void)
+{
+	tdestroy(kprobe_root, kprobe_free);
+	kprobe_root = NULL;
+}
+
+bool store_new_kprobe(const char *event)
+{
+	char *ptr = strdup(event);
+	char **val;
+
+	if (!ptr) {
+		MEM_ERROR;
+		return false;
+	}
+
+	val = tsearch(ptr, &kprobe_root, kprobe_compare);
+	if (!val || strcmp(*val, ptr) != 0) {
+		PyErr_Format(TFS_ERROR, "Failed to store new kprobe \'%s\'.",
+			     event);
+		return false;
+	}
+
+	return true;
+}
+
+PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
+						   PyObject *kwargs)
+{
+	static char *kwlist[] = {"event", "function", "probe", NULL};
+	const char *event, *function, *probe;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "sss",
+					 kwlist,
+					 &event,
+					 &function,
+					 &probe)) {
+		return NULL;
+	}
+
+	if (tracefs_kprobe_raw(TC_SYS, event, function, probe) < 0) {
+		PyErr_Format(TFS_ERROR, "Failed to register kprobe \'%s\'.",
+			     event);
+		return NULL;
+	}
+
+	if (!store_new_kprobe(event))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
+						      PyObject *kwargs)
+{
+	static char *kwlist[] = {"event", "function", "probe", NULL};
+	const char *event, *function, *probe = "$retval";
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "ss|s",
+					 kwlist,
+					 &event,
+					 &function,
+					 &probe)) {
+		return NULL;
+	}
+
+	if (tracefs_kretprobe_raw(TC_SYS, event, function, probe) < 0) {
+		PyErr_Format(TFS_ERROR, "Failed to register kretprobe \'%s\'.",
+			     event);
+		return NULL;
+	}
+
+	if (!store_new_kprobe(event))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_unregister_kprobe(PyObject *self, PyObject *args,
+						     PyObject *kwargs)
+{
+	static char *kwlist[] = {"event", "force",  NULL};
+	const char *event;
+	int force = false;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s|p",
+					 kwlist,
+					 &event,
+					 &force)) {
+		return NULL;
+	}
+
+	if (is_all(event)) {
+		if (force) {
+			/* Clear all register kprobes. */
+			if (tracefs_kprobe_clear_all(force) < 0)
+				goto fail;
+		} else {
+			/*
+			 * Clear only the kprobes registered by
+			 * trace-cruncher.
+			 */
+			destroy_all_kprobes();
+		}
+	} else {
+		tdelete(event, &kprobe_root, kprobe_compare);
+		if (unregister_kprobe(event) < 0)
+			goto fail;
+	}
+
+	Py_RETURN_NONE;
+
+ fail:
+	PyErr_Format(TFS_ERROR, "Failed to unregister kprobe \'%s\'.", event);
+	return NULL;
+}
+
+PyObject *PyFtrace_registered_kprobe_names(PyObject *self)
+{
+	char **list = tracefs_get_kprobes(TRACEFS_ALL_KPROBES);
+	return tfs_list2py_list(list);
+}
+
+PyObject *PyFtrace_registered_kprobes(PyObject *self)
+{
+	const char *file = "kprobe_events";
+	PyObject *list = PyList_New(0);
+	char *probes, *token;
+	int size;
+
+	size = read_from_file(NULL, file, &probes);
+	if (size < 0)
+		return NULL;
+
+	if (size == 0 || !probes)
+		return list;
+
+	token = strtok(probes, "\n");
+	while (token != NULL) {
+		PyList_Append(list, PyUnicode_FromString(token));
+		token = strtok(NULL, "\n");
+	}
+
+	return list;
+}
+
+PyObject *PyFtrace_set_kprobe_filter(PyObject *self, PyObject *args,
+						     PyObject *kwargs)
+{
+	const char *instance_name = NO_ARG, *event, *filter;
+	struct tracefs_instance *instance;
+	char path[PATH_MAX];
+
+	static char *kwlist[] = {"event", "filter", "instance", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "ss|s",
+					 kwlist,
+					 &event,
+					 &filter,
+					 &instance_name)) {
+		return NULL;
+	}
+
+	if (!get_optional_instance(instance_name, &instance))
+		return NULL;
+
+	sprintf(path, "events/%s/%s/filter", TC_SYS, event);
+	if (!write_to_file_and_check(instance, path, filter)) {
+		PyErr_SetString(TFS_ERROR, "Failed to set kprobe filter.");
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_clear_kprobe_filter(PyObject *self, PyObject *args,
+						       PyObject *kwargs)
+{
+	const char *instance_name = NO_ARG, *event;
+	struct tracefs_instance *instance;
+	char path[PATH_MAX];
+
+	static char *kwlist[] = {"event", "instance", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s|s",
+					 kwlist,
+					 &event,
+					 &instance_name)) {
+		return NULL;
+	}
+
+	if (!get_optional_instance(instance_name, &instance))
+		return NULL;
+
+	sprintf(path, "events/%s/%s/filter", TC_SYS, event);
+	if (!write_to_file(instance, path, OFF)) {
+		PyErr_SetString(TFS_ERROR, "Failed to clear kprobe filter.");
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+static bool enable_kprobe(PyObject *self, PyObject *args, PyObject *kwargs,
+			  bool enable)
+{
+	static char *kwlist[] = {"event", "instance", NULL};
+	struct tracefs_instance *instance;
+	const char *instance_name, *event;
+
+	instance_name = event = NO_ARG;
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s|s",
+					 kwlist,
+					 &event,
+					 &instance_name)) {
+		return false;
+	}
+
+	if (!get_optional_instance(instance_name, &instance))
+		return false;
+
+	return event_enable_disable(instance, TC_SYS, event, enable);
+}
+
+PyObject *PyFtrace_enable_kprobe(PyObject *self, PyObject *args,
+						 PyObject *kwargs)
+{
+	if (!enable_kprobe(self, args, kwargs, true))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_disable_kprobe(PyObject *self, PyObject *args,
+						  PyObject *kwargs)
+{
+	if (!enable_kprobe(self, args, kwargs, false))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_kprobe_is_enabled(PyObject *self, PyObject *args,
+						     PyObject *kwargs)
+{
+	static char *kwlist[] = {"event", "instance", NULL};
+	struct tracefs_instance *instance;
+	const char *instance_name, *event;
+
+	instance_name = event = NO_ARG;
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s|s",
+					 kwlist,
+					 &event,
+					 &instance_name)) {
+		return NULL;
+	}
+
+	if (!get_optional_instance(instance_name, &instance))
+		return NULL;
+
+	return event_is_enabled(instance, TC_SYS, event);
 }
 
 static bool set_fork_options(struct tracefs_instance *instance, bool enable)
@@ -1865,5 +2194,6 @@ PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs)
 
 void PyFtrace_at_exit(void)
 {
+	destroy_all_kprobes();
 	destroy_all_instances();
 }

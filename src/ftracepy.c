@@ -214,6 +214,61 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Gat a list of all supported options."
 	},
+	{"tc_event_system",
+	 (PyCFunction) PyFtrace_tc_event_system,
+	 METH_NOARGS,
+	 "Get the name of the event system used by trace-cruncher."
+	},
+	{"register_kprobe",
+	 (PyCFunction) PyFtrace_register_kprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a kprobe."
+	},
+	{"register_kretprobe",
+	 (PyCFunction) PyFtrace_register_kretprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a kretprobe."
+	},
+	{"unregister_kprobe",
+	 (PyCFunction) PyFtrace_unregister_kprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a kprobe."
+	},
+	{"registered_kprobes",
+	 (PyCFunction) PyFtrace_registered_kprobes,
+	 METH_NOARGS,
+	 "Get all registered kprobes."
+	},
+	{"registered_kprobe_names",
+	 (PyCFunction) PyFtrace_registered_kprobe_names,
+	 METH_NOARGS,
+	 "Get the names of all registered kprobes."
+	},
+	{"set_kprobe_filter",
+	 (PyCFunction) PyFtrace_set_kprobe_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a filter for a kprobe."
+	},
+	{"clear_kprobe_filter",
+	 (PyCFunction) PyFtrace_clear_kprobe_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Clear the filter of a kprobe."
+	},
+	{"enable_kprobe",
+	 (PyCFunction) PyFtrace_enable_kprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Enable kprobe event."
+	},
+	{"disable_kprobe",
+	 (PyCFunction) PyFtrace_disable_kprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Disable kprobe event."
+	},
+	{"kprobe_is_enabled",
+	 (PyCFunction) PyFtrace_kprobe_is_enabled,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Check if kprobe event is enabled."
+	},
 	{"trace_process",
 	 (PyCFunction) PyFtrace_trace_process,
 	 METH_VARARGS | METH_KEYWORDS,
