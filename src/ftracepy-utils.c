@@ -531,6 +531,11 @@ bool get_instance_from_arg(PyObject *args, PyObject *kwargs,
 	return true;
 }
 
+PyObject *PyTfsInstance_dir(PyTfsInstance *self)
+{
+	return PyUnicode_FromString(tracefs_instance_get_dir(self->ptrObj));
+}
+
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());

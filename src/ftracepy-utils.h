@@ -22,6 +22,8 @@ C_OBJECT_WRAPPER_DECLARE(tep_event, PyTepEvent)
 
 C_OBJECT_WRAPPER_DECLARE(tep_handle, PyTep)
 
+C_OBJECT_WRAPPER_DECLARE(tracefs_instance, PyTfsInstance)
+
 PyObject *PyTepRecord_time(PyTepRecord* self);
 
 PyObject *PyTepRecord_cpu(PyTepRecord* self);
@@ -43,6 +45,8 @@ PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 
 PyObject *PyTep_get_event(PyTep *self, PyObject *args,
 				       PyObject *kwargs);
+
+PyObject *PyTfsInstance_dir(PyTfsInstance *self);
 
 PyObject *PyFtrace_dir(PyObject *self);
 

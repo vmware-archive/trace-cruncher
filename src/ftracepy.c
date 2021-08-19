@@ -73,6 +73,19 @@ static PyMethodDef PyTep_methods[] = {
 
 C_OBJECT_WRAPPER(tep_handle, PyTep, NO_DESTROY, tep_free)
 
+static PyMethodDef PyTfsInstance_methods[] = {
+	{"dir",
+	 (PyCFunction) PyTfsInstance_dir,
+	 METH_NOARGS,
+	 "Get the absolute path to the instance directory."
+	},
+	{NULL, NULL, 0, NULL}
+};
+
+C_OBJECT_WRAPPER(tracefs_instance, PyTfsInstance,
+		 tracefs_instance_destroy,
+		 tracefs_instance_free)
+
 static PyMethodDef ftracepy_methods[] = {
 	{"dir",
 	 (PyCFunction) PyFtrace_dir,
@@ -326,6 +339,9 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	if (!PyTepRecordTypeInit())
 		return NULL;
 
+	if (!PyTfsInstanceTypeInit())
+		return NULL;
+
 	TFS_ERROR = PyErr_NewException("tracecruncher.ftracepy.tfs_error",
 				       NULL, NULL);
 
@@ -340,6 +356,7 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	PyModule_AddObject(module, "tep_handle", (PyObject *) &PyTepType);
 	PyModule_AddObject(module, "tep_event", (PyObject *) &PyTepEventType);
 	PyModule_AddObject(module, "tep_record", (PyObject *) &PyTepRecordType);
+	PyModule_AddObject(module, "tracefs_instance", (PyObject *) &PyTfsInstanceType);
 
 	PyModule_AddObject(module, "tfs_error", TFS_ERROR);
 	PyModule_AddObject(module, "tep_error", TEP_ERROR);
