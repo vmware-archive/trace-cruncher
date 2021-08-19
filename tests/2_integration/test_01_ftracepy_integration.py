@@ -19,17 +19,8 @@ class InstanceTestCase(unittest.TestCase):
 
         for i in range(25) :
             instance_name = 'test_instance_%s' % i
-            ft.create_instance(instance_name)
+            inst = ft.create_instance(instance_name)
             self.assertTrue(os.path.isdir(instances_dir + instance_name))
-
-        for i in range(15) :
-            instance_name = 'test_instance_%s' % i
-            ft.destroy_instance(instance_name)
-            self.assertFalse(os.path.isdir(instances_dir + instance_name))
-
-        self.assertEqual(len(os.listdir(instances_dir)), 10)
-        ft.destroy_instance('all')
-        self.assertEqual(len(os.listdir(instances_dir)), 0)
 
     def test_current_tracer(self):
         current = ft.get_current_tracer()
@@ -42,68 +33,67 @@ class InstanceTestCase(unittest.TestCase):
         ft.set_current_tracer()
 
         instance_name = 'test_instance'
-        ft.create_instance(instance_name)
-        current = ft.get_current_tracer(instance=instance_name)
+        inst = ft.create_instance(instance_name)
+        current = ft.get_current_tracer(instance=inst)
         self.assertEqual(current, 'nop')
-        ft.tracing_OFF(instance=instance_name)
-        ft.set_current_tracer(instance=instance_name, tracer=name)
-        current = ft.get_current_tracer(instance=instance_name)
+        ft.tracing_OFF(instance=inst)
+        ft.set_current_tracer(instance=inst, tracer=name)
+        current = ft.get_current_tracer(instance=inst)
         self.assertEqual(current, name)
-        ft.destroy_instance('all')
 
     def test_enable_events(self):
         instance_name = 'test_instance'
-        ft.create_instance(instance_name)
-        systems = ft.available_event_systems(instance=instance_name)
+        inst = ft.create_instance(instance_name)
+        systems = ft.available_event_systems(instance=inst)
         systems.remove('ftrace')
         for s in systems:
-            ret = ft.event_is_enabled(instance=instance_name,
+            ret = ft.event_is_enabled(instance=inst,
                                        system=s)
             self.assertEqual(ret, '0')
-            ft.enable_event(instance=instance_name,
+            ft.enable_event(instance=inst,
                              system=s)
-            ret = ft.event_is_enabled(instance=instance_name,
+            ret = ft.event_is_enabled(instance=inst,
                                        system=s)
             self.assertEqual(ret, '1')
 
-            ft.disable_event(instance=instance_name,
+            ft.disable_event(instance=inst,
                              system=s)
-            events = ft.available_system_events(instance=instance_name,
+            events = ft.available_system_events(instance=inst,
                                                  system=s)
             for e in events:
-                ret = ft.event_is_enabled(instance=instance_name,
+                ret = ft.event_is_enabled(instance=inst,
                                            system=s,
                                            event=e)
                 self.assertEqual(ret, '0')
-                ft.enable_event(instance=instance_name,
+                ft.enable_event(instance=inst,
                                  system=s,
                                  event=e)
-                ret = ft.event_is_enabled(instance=instance_name,
+                ret = ft.event_is_enabled(instance=inst,
                                            system=s,
                                            event=e)
                 self.assertEqual(ret, '1')
-                ret = ft.event_is_enabled(instance=instance_name,
+                ret = ft.event_is_enabled(instance=inst,
                                            system=s)
                 if e != events[-1]:
                     self.assertEqual(ret, 'X')
 
-            ret = ft.event_is_enabled(instance=instance_name,
+            ret = ft.event_is_enabled(instance=inst,
                                        system=s)
             self.assertEqual(ret, '1')
 
-        ret = ft.event_is_enabled(instance=instance_name,
+        ret = ft.event_is_enabled(instance=inst,
                                    system=s)
         self.assertEqual(ret, '1')
 
-        ft.disable_event(instance=instance_name, event='all')
+        ft.disable_event(instance=inst, event='all')
         for s in systems:
-            ret = ft.event_is_enabled(instance=instance_name,
+            ret = ft.event_is_enabled(instance=inst,
                                        system=s)
             self.assertEqual(ret, '0')
-            events = ft.available_system_events(instance=instance_name,
+            events = ft.available_system_events(instance=inst,
                                                  system=s)
             for e in events:
-                ret = ft.event_is_enabled(instance=instance_name,
+                ret = ft.event_is_enabled(instance=inst,
                                            system=s,
                                            event=e)
                 self.assertEqual(ret, '0')

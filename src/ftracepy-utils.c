@@ -19,7 +19,6 @@
 // trace-cruncher
 #include "ftracepy-utils.h"
 
-static void *instance_root;
 PyObject *TFS_ERROR;
 PyObject *TEP_ERROR;
 PyObject *TRACECRUNCHER_ERROR;
@@ -419,118 +418,6 @@ static PyObject *tfs_list2py_list(char **list)
 	return py_list;
 }
 
-struct instance_wrapper {
-	struct tracefs_instance *ptr;
-	const char *name;
-};
-
-const char *instance_wrapper_get_name(const struct instance_wrapper *iw)
-{
-	if (!iw->ptr)
-		return iw->name;
-
-	return tracefs_instance_get_name(iw->ptr);
-}
-
-static int instance_compare(const void *a, const void *b)
-{
-	const struct instance_wrapper *iwa, *iwb;
-
-	iwa = (const struct instance_wrapper *) a;
-	iwb = (const struct instance_wrapper *) b;
-
-	return strcmp(instance_wrapper_get_name(iwa),
-		      instance_wrapper_get_name(iwb));
-}
-
-void instance_wrapper_free(void *ptr)
-{
-	struct instance_wrapper *iw;
-	if (!ptr)
-		return;
-
-	iw = ptr;
-	if (iw->ptr) {
-		if (tracefs_instance_destroy(iw->ptr) < 0)
-			fprintf(stderr,
-				"\ntfs_error: Failed to destroy instance '%s'.\n",
-				get_instance_name(iw->ptr));
-
-		free(iw->ptr);
-	}
-
-	free(ptr);
-}
-
-static void destroy_all_instances(void)
-{
-	tdestroy(instance_root, instance_wrapper_free);
-	instance_root = NULL;
-}
-
-static struct tracefs_instance *find_instance(const char *name)
-{
-	struct instance_wrapper iw, **iw_ptr;
-	if (!is_set(name))
-		return NULL;
-
-	if (!tracefs_instance_exists(name)) {
-		PyErr_Format(TFS_ERROR, "Trace instance \'%s\' does not exist.",
-			     name);
-		return NULL;
-	}
-
-	iw.ptr = NULL;
-	iw.name = name;
-	iw_ptr = tfind(&iw, &instance_root, instance_compare);
-	if (!iw_ptr || !(*iw_ptr) || !(*iw_ptr)->ptr ||
-	    strcmp(tracefs_instance_get_name((*iw_ptr)->ptr), name) != 0) {
-		PyErr_Format(TFS_ERROR, "Unable to find trace instances \'%s\'.",
-			     name);
-		return NULL;
-	}
-
-	return (*iw_ptr)->ptr;
-}
-
-bool get_optional_instance(const char *instance_name,
-			   struct tracefs_instance **instance)
-{
-	*instance = NULL;
-	if (is_set(instance_name)) {
-		*instance = find_instance(instance_name);
-		if (!instance) {
-			PyErr_Format(TFS_ERROR,
-				     "Failed to find instance \'%s\'.",
-				     instance_name);
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool get_instance_from_arg(PyObject *args, PyObject *kwargs,
-			   struct tracefs_instance **instance)
-{
-	const char *instance_name;
-
-	static char *kwlist[] = {"instance", NULL};
-	instance_name = NO_ARG;
-	if (!PyArg_ParseTupleAndKeywords(args,
-					 kwargs,
-					 "|s",
-					 kwlist,
-					 &instance_name)) {
-		return false;
-	}
-
-	if (!get_optional_instance(instance_name, instance))
-		return false;
-
-	return true;
-}
-
 PyObject *PyTfsInstance_dir(PyTfsInstance *self)
 {
 	return PyUnicode_FromString(tracefs_instance_get_dir(self->ptrObj));
@@ -590,7 +477,6 @@ static bool tracing_OFF(struct tracefs_instance *instance);
 PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 						   PyObject *kwargs)
 {
-	struct instance_wrapper *iw, **iw_ptr;
 	struct tracefs_instance *instance;
 	const char *name = NO_ARG;
 	int tracing_on = true;
@@ -618,115 +504,53 @@ PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 		return NULL;
 	}
 
-	iw = calloc(1, sizeof(*iw));
-	if (!iw) {
-		MEM_ERROR
-		return NULL;
-	}
-
-	iw->ptr = instance;
-	iw_ptr = tsearch(iw, &instance_root, instance_compare);
-	if (!iw_ptr || !(*iw_ptr) || !(*iw_ptr)->ptr ||
-	    strcmp(tracefs_instance_get_name((*iw_ptr)->ptr), name) != 0) {
-		PyErr_Format(TFS_ERROR,
-			     "Failed to store new trace instance \'%s\'.",
-			     name);
-		tracefs_instance_destroy(instance);
-		tracefs_instance_free(instance);
-		free(iw);
-
-		return NULL;
-	}
-
 	if (!tracing_on)
 		tracing_OFF(instance);
 
-	return PyUnicode_FromString(name);
+	return PyTfsInstance_New(instance);
 }
 
-PyObject *PyFtrace_destroy_instance(PyObject *self, PyObject *args,
-						    PyObject *kwargs)
+static bool get_optional_instance(PyObject *py_obj,
+				  struct tracefs_instance **instance)
 {
-	struct tracefs_instance *instance;
-	struct instance_wrapper iw;
-	char *name;
+	PyTfsInstance *py_inst;
 
-	static char *kwlist[] = {"name", NULL};
+	if (!py_obj) {
+		*instance = NULL;
+		return true;
+	}
+
+	if (!PyTfsInstance_Check(py_obj)) {
+		PyErr_SetString(TRACECRUNCHER_ERROR,
+				"Passing argument \'instance\' with incompatible type.");
+		return false;
+	}
+
+	py_inst = (PyTfsInstance *)py_obj;
+	*instance = py_inst->ptrObj;
+
+	return true;
+}
+
+bool get_instance_from_arg(PyObject *args, PyObject *kwargs,
+			   struct tracefs_instance **instance)
+{
+	static char *kwlist[] = {"instance", NULL};
+	PyObject *py_inst = NULL;
+	*instance = NULL;
+
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s",
+					 "|O",
 					 kwlist,
-					 &name)) {
-		return NULL;
+					 &py_inst)) {
+		return false;
 	}
 
-	if (is_all(name)) {
-		destroy_all_instances();
-		Py_RETURN_NONE;
-	}
-
-	instance = find_instance(name);
-	if (!instance) {
-		PyErr_Format(TFS_ERROR,
-			     "Unable to destroy trace instances \'%s\'.",
-			     name);
-		return NULL;
-	}
-
-	iw.ptr = NULL;
-	iw.name = name;
-	tdelete(&iw, &instance_root, instance_compare);
-
-	tracefs_instance_destroy(instance);
-	tracefs_instance_free(instance);
-
-	Py_RETURN_NONE;
-}
-
-PyObject *instance_list;
-
-static void instance_action(const void *nodep, VISIT which, int depth)
-{
-	struct instance_wrapper *iw = *( struct instance_wrapper **) nodep;
-	const char *name;
-
-	switch(which) {
-	case preorder:
-	case endorder:
-		break;
-
-	case postorder:
-	case leaf:
-		name = tracefs_instance_get_name(iw->ptr);
-		PyList_Append(instance_list, PyUnicode_FromString(name));
-		break;
-	}
-}
-
-PyObject *PyFtrace_get_all_instances(PyObject *self)
-{
-	instance_list = PyList_New(0);
-	twalk(instance_root, instance_action);
-
-	return instance_list;
-}
-
-PyObject *PyFtrace_destroy_all_instances(PyObject *self)
-{
-	destroy_all_instances();
-
-	Py_RETURN_NONE;
-}
-
-PyObject *PyFtrace_instance_dir(PyObject *self, PyObject *args,
-						PyObject *kwargs)
-{
-	struct tracefs_instance *instance;
-
-	if (!get_instance_from_arg(args, kwargs, &instance))
+	if (!get_optional_instance(py_inst, instance))
 		return NULL;
 
-	return PyUnicode_FromString(tracefs_instance_get_dir(instance));
+	return true;
 }
 
 PyObject *PyFtrace_available_tracers(PyObject *self, PyObject *args,
@@ -748,21 +572,22 @@ PyObject *PyFtrace_available_tracers(PyObject *self, PyObject *args,
 PyObject *PyFtrace_set_current_tracer(PyObject *self, PyObject *args,
 						      PyObject *kwargs)
 {
-	const char *file = "current_tracer", *tracer, *instance_name;
-	struct tracefs_instance *instance;
-
 	static char *kwlist[] = {"tracer", "instance", NULL};
-	tracer = instance_name = NO_ARG;
+	const char *file = "current_tracer", *tracer;
+	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+
+	tracer = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "|ss",
+					 "|sO",
 					 kwlist,
 					 &tracer,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (is_set(tracer) &&
@@ -836,20 +661,21 @@ PyObject *PyFtrace_available_system_events(PyObject *self, PyObject *args,
 							   PyObject *kwargs)
 {
 	static char *kwlist[] = {"system", "instance", NULL};
-	const char *instance_name = NO_ARG, *system;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	const char *system;
 	char **list;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|s",
+					 "s|O",
 					 kwlist,
 					 &system,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	list = tracefs_system_events(tracefs_instance_get_dir(instance),
@@ -947,21 +773,22 @@ static bool set_enable_event(PyObject *self,
 			     bool enable)
 {
 	static char *kwlist[] = {"instance", "system", "event", NULL};
-	const char *instance_name, *system, *event;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	const char *system, *event;
 
-	instance_name = system = event = NO_ARG;
+	system = event = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "|sss",
+					 "|Oss",
 					 kwlist,
-					 &instance_name,
+					 &py_inst,
 					 &system,
 					 &event)) {
 		return false;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return false;
 
 	return event_enable_disable(instance, system, event, enable);
@@ -995,22 +822,21 @@ static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 	PyObject *system_list = NULL, *event_list = NULL, *system_event_list;
 	const char **systems = NULL, **events = NULL;
 	struct tracefs_instance *instance;
-	const char *instance_name;
+	PyObject *py_inst = NULL;
 	char *file = NULL;
 	int ret, s, e;
 
-	instance_name = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "|sOO",
+					 "|OOO",
 					 kwlist,
-					 &instance_name,
+					 &py_inst,
 					 &system_list,
 					 &event_list)) {
 		return false;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return false;
 
 	if (!system_list && !event_list)
@@ -1122,21 +948,22 @@ PyObject *PyFtrace_event_is_enabled(PyObject *self, PyObject *args,
 						    PyObject *kwargs)
 {
 	static char *kwlist[] = {"instance", "system", "event", NULL};
-	const char *instance_name, *system, *event;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	const char *system, *event;
 
-	instance_name = system = event = NO_ARG;
+	system = event = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "|sss",
+					 "|Oss",
 					 kwlist,
-					 &instance_name,
+					 &py_inst,
 					 &system,
 					 &event)) {
 		return false;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return false;
 
 	return event_is_enabled(instance, system, event);
@@ -1145,23 +972,24 @@ PyObject *PyFtrace_event_is_enabled(PyObject *self, PyObject *args,
 PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
 						    PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG, *system, *event, *filter;
+	const char *system, *event, *filter;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	char path[PATH_MAX];
 
 	static char *kwlist[] = {"system", "event", "filter", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "sss|s",
+					 "ssO|)",
 					 kwlist,
 					 &system,
 					 &event,
 					 &filter,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	sprintf(path, "events/%s/%s/filter", system, event);
@@ -1176,22 +1004,23 @@ PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
 PyObject *PyFtrace_clear_event_filter(PyObject *self, PyObject *args,
 						      PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG, *system, *event;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	const char *system, *event;
 	char path[PATH_MAX];
 
 	static char *kwlist[] = {"system", "event", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "ss|s",
+					 "ss|O",
 					 kwlist,
 					 &system,
 					 &event,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	sprintf(path, "events/%s/%s/filter", system, event);
@@ -1350,21 +1179,21 @@ static bool set_pid(struct tracefs_instance *instance,
 PyObject *PyFtrace_set_event_pid(PyObject *self, PyObject *args,
 						 PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	PyObject *pid_val;
 
 	static char *kwlist[] = {"pid", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "O|s",
+					 "O|O",
 					 kwlist,
 					 &pid_val,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (!set_pid(instance, "set_event_pid", pid_val))
@@ -1376,21 +1205,21 @@ PyObject *PyFtrace_set_event_pid(PyObject *self, PyObject *args,
 PyObject *PyFtrace_set_ftrace_pid(PyObject *self, PyObject *args,
 						  PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	PyObject *pid_val;
 
 	static char *kwlist[] = {"pid", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "O|s",
+					 "O|O",
 					 kwlist,
 					 &pid_val,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (!set_pid(instance, "set_ftrace_pid", pid_val))
@@ -1416,20 +1245,21 @@ static bool set_opt(struct tracefs_instance *instance,
 static PyObject *set_option_py_args(PyObject *args, PyObject *kwargs,
 				   const char *val)
 {
-	const char *instance_name = NO_ARG, *opt;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	const char *opt;
 
 	static char *kwlist[] = {"option", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|s",
+					 "s|O",
 					 kwlist,
 					 &opt,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (!set_opt(instance, opt, val))
@@ -1453,21 +1283,22 @@ PyObject *PyFtrace_disable_option(PyObject *self, PyObject *args,
 PyObject *PyFtrace_option_is_set(PyObject *self, PyObject *args,
 						 PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG, *opt;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	enum tracefs_option_id opt_id;
+	const char *opt;
 
 	static char *kwlist[] = {"option", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|s",
+					 "s|O",
 					 kwlist,
 					 &opt,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	opt_id = tracefs_option_id(opt);
@@ -1706,22 +1537,23 @@ PyObject *PyFtrace_registered_kprobes(PyObject *self)
 PyObject *PyFtrace_set_kprobe_filter(PyObject *self, PyObject *args,
 						     PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG, *event, *filter;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	const char *event, *filter;
 	char path[PATH_MAX];
 
 	static char *kwlist[] = {"event", "filter", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "ss|s",
+					 "ss|O",
 					 kwlist,
 					 &event,
 					 &filter,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	sprintf(path, "events/%s/%s/filter", TC_SYS, event);
@@ -1736,21 +1568,22 @@ PyObject *PyFtrace_set_kprobe_filter(PyObject *self, PyObject *args,
 PyObject *PyFtrace_clear_kprobe_filter(PyObject *self, PyObject *args,
 						       PyObject *kwargs)
 {
-	const char *instance_name = NO_ARG, *event;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	char path[PATH_MAX];
+	const char *event;
 
 	static char *kwlist[] = {"event", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|s",
+					 "s|O",
 					 kwlist,
 					 &event,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	sprintf(path, "events/%s/%s/filter", TC_SYS, event);
@@ -1767,19 +1600,19 @@ static bool enable_kprobe(PyObject *self, PyObject *args, PyObject *kwargs,
 {
 	static char *kwlist[] = {"event", "instance", NULL};
 	struct tracefs_instance *instance;
-	const char *instance_name, *event;
+	PyObject *py_inst = NULL;
+	const char *event = NO_ARG;
 
-	instance_name = event = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|s",
+					 "s|O",
 					 kwlist,
 					 &event,
-					 &instance_name)) {
+					 &py_inst)) {
 		return false;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return false;
 
 	return event_enable_disable(instance, TC_SYS, event, enable);
@@ -1808,19 +1641,19 @@ PyObject *PyFtrace_kprobe_is_enabled(PyObject *self, PyObject *args,
 {
 	static char *kwlist[] = {"event", "instance", NULL};
 	struct tracefs_instance *instance;
-	const char *instance_name, *event;
+	PyObject *py_inst = NULL;
+	const char *event = NO_ARG;
 
-	instance_name = event = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|s",
+					 "s|O",
 					 kwlist,
 					 &event,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	return event_is_enabled(instance, TC_SYS, event);
@@ -2023,27 +1856,27 @@ static bool init_callback_tep(struct tracefs_instance *instance,
 PyObject *PyFtrace_trace_shell_process(PyObject *self, PyObject *args,
 						       PyObject *kwargs)
 {
-	const char *plugin = "__main__", *py_callback = "callback", *instance_name;
+	const char *plugin = "__main__", *py_callback = "callback";
 	static char *kwlist[] = {"process", "plugin", "callback", "instance", NULL};
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	struct tep_handle *tep;
 	PyObject *py_func;
 	char *process;
 	pid_t pid;
 
-	instance_name = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|sss",
+					 "s|ssO",
 					 kwlist,
 					 &process,
 					 &plugin,
 					 &py_callback,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (!init_callback_tep(instance, plugin, py_callback, &tep, &py_func))
@@ -2070,27 +1903,27 @@ PyObject *PyFtrace_trace_shell_process(PyObject *self, PyObject *args,
 PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
 						 PyObject *kwargs)
 {
-	const char *plugin = "__main__", *py_callback = "callback", *instance_name;
+	const char *plugin = "__main__", *py_callback = "callback";
 	static char *kwlist[] = {"argv", "plugin", "callback", "instance", NULL};
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	struct tep_handle *tep;
 	PyObject *py_func, *py_argv, *py_arg;
 	pid_t pid;
 	int i, argc;
 
-	instance_name = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "O|sss",
+					 "O|ssO",
 					 kwlist,
 					 &py_argv,
 					 &plugin,
 					 &py_callback,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (!init_callback_tep(instance, plugin, py_callback, &tep, &py_func))
@@ -2173,8 +2006,7 @@ PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
 	const char *plugin = "__main__", *py_callback = "callback";
 	bool *callback_status = &callback_ctx.status;
 	bool *keep_going = &iterate_keep_going;
-
-	const char *instance_name;
+	PyObject *py_inst = NULL;
 	struct tep_handle *tep;
 	PyObject *py_func;
 	int ret;
@@ -2182,20 +2014,19 @@ PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
 	(*(volatile bool *)keep_going) = true;
 	signal(SIGINT, iterate_stop);
 
-	instance_name = NO_ARG;
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "|sss",
+					 "|ssO",
 					 kwlist,
 					 &plugin,
 					 &py_callback,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
 	py_func = get_callback_func(plugin, py_callback);
 	if (!py_func ||
-	    !get_optional_instance(instance_name, &itr_instance) ||
+	    !get_optional_instance(py_inst, &itr_instance) ||
 	    !notrace_this_pid(itr_instance))
 		return NULL;
 
@@ -2219,22 +2050,22 @@ PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
 PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	static char *kwlist[] = {"pid", "fork", "instance", NULL};
-	const char *instance_name = NO_ARG;
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
 	PyObject *pid_val;
 	int fork = -1;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "O|ps",
+					 "O|pO",
 					 kwlist,
 					 &pid_val,
 					 &fork,
-					 &instance_name)) {
+					 &py_inst)) {
 		return NULL;
 	}
 
-	if (!get_optional_instance(instance_name, &instance))
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	if (!hook2pid(instance, pid_val, fork))
@@ -2246,5 +2077,4 @@ PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs)
 void PyFtrace_at_exit(void)
 {
 	destroy_all_kprobes();
-	destroy_all_instances();
 }

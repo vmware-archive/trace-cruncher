@@ -102,26 +102,6 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Create new tracefs instance."
 	},
-	{"get_all_instances",
-	 (PyCFunction) PyFtrace_get_all_instances,
-	 METH_NOARGS,
-	 "Get all existing tracefs instances."
-	},
-	{"destroy_instance",
-	 (PyCFunction) PyFtrace_destroy_instance,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Destroy existing tracefs instance."
-	},
-	{"destroy_all_instances",
-	 (PyCFunction) PyFtrace_destroy_all_instances,
-	 METH_NOARGS,
-	 "Destroy all existing tracefs instances."
-	},
-	{"instance_dir",
-	 (PyCFunction) PyFtrace_instance_dir,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Get the absolute path to the instance directory."
-	},
 	{"available_tracers",
 	 (PyCFunction) PyFtrace_available_tracers,
 	 METH_VARARGS | METH_KEYWORDS,
