@@ -65,6 +65,7 @@ static inline void no_free()
 } py_type;									\
 PyObject *py_type##_New(struct c_type *c_ptr);					\
 bool py_type##TypeInit();							\
+bool py_type##_Check(PyObject *obj);						\
 
 #define  C_OBJECT_WRAPPER(c_type, py_type, ptr_free)				\
 static PyTypeObject py_type##Type = {						\
@@ -100,6 +101,10 @@ bool py_type##TypeInit()							\
 		return false;							\
 	Py_INCREF(&py_type##Type);						\
 	return true;								\
+}										\
+bool py_type##_Check(PyObject *obj)						\
+{										\
+	return (obj->ob_type == &py_type##Type) ? true : false;			\
 }										\
 
 #endif
