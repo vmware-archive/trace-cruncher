@@ -54,27 +54,27 @@ static inline void no_free()
 
 #define STR(x) #x
 
-#define MAKE_TYPE_STR(x) STR(traceevent.x)
+#define MAKE_TYPE_STR(x) STR(trace.x)
 
-#define MAKE_DIC_STR(x) STR(libtraceevent x object)
+#define MAKE_DIC_STR(x) STR(libtrace x object)
 
 #define C_OBJECT_WRAPPER_DECLARE(c_type, py_type)				\
 	typedef struct {							\
 	PyObject_HEAD								\
 	struct c_type *ptrObj;							\
 } py_type;									\
-PyObject *py_type##_New(struct c_type *evt_ptr);				\
+PyObject *py_type##_New(struct c_type *c_ptr);					\
 bool py_type##TypeInit();							\
 
 #define  C_OBJECT_WRAPPER(c_type, py_type, ptr_free)				\
 static PyTypeObject py_type##Type = {						\
 	PyVarObject_HEAD_INIT(NULL, 0) MAKE_TYPE_STR(c_type)			\
 };										\
-PyObject *py_type##_New(struct c_type *evt_ptr)					\
+PyObject *py_type##_New(struct c_type *c_ptr)					\
 {										\
 	py_type *newObject;							\
 	newObject = PyObject_New(py_type, &py_type##Type);			\
-	newObject->ptrObj = evt_ptr;						\
+	newObject->ptrObj = c_ptr;						\
 	return (PyObject *) newObject;						\
 }										\
 static int py_type##_init(py_type *self, PyObject *args, PyObject *kwargs)	\
