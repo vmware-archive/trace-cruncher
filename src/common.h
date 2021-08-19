@@ -46,11 +46,17 @@ static inline bool is_set(const char *arg)
 	return !(is_all(arg) || is_no_arg(arg));
 }
 
-static inline void no_free()
+static inline void no_free(void *ptr)
 {
 }
 
 #define NO_FREE		no_free
+
+static inline void no_destroy(void *ptr)
+{
+}
+
+#define NO_DESTROY	no_destroy
 
 #define STR(x) #x
 
@@ -58,16 +64,22 @@ static inline void no_free()
 
 #define MAKE_DIC_STR(x) STR(libtrace x object)
 
+typedef struct {
+	PyObject_HEAD
+	bool destroy;
+} PyFtrace_Object_HEAD;
+
 #define C_OBJECT_WRAPPER_DECLARE(c_type, py_type)				\
 	typedef struct {							\
 	PyObject_HEAD								\
+	bool destroy;								\
 	struct c_type *ptrObj;							\
 } py_type;									\
 PyObject *py_type##_New(struct c_type *c_ptr);					\
 bool py_type##TypeInit();							\
 bool py_type##_Check(PyObject *obj);						\
 
-#define  C_OBJECT_WRAPPER(c_type, py_type, ptr_free)				\
+#define  C_OBJECT_WRAPPER(c_type, py_type, obj_destroy, ptr_free)		\
 static PyTypeObject py_type##Type = {						\
 	PyVarObject_HEAD_INIT(NULL, 0) MAKE_TYPE_STR(c_type)			\
 };										\
@@ -76,6 +88,7 @@ PyObject *py_type##_New(struct c_type *c_ptr)					\
 	py_type *newObject;							\
 	newObject = PyObject_New(py_type, &py_type##Type);			\
 	newObject->ptrObj = c_ptr;						\
+	newObject->destroy = true;						\
 	return (PyObject *) newObject;						\
 }										\
 static int py_type##_init(py_type *self, PyObject *args, PyObject *kwargs)	\
@@ -85,6 +98,8 @@ static int py_type##_init(py_type *self, PyObject *args, PyObject *kwargs)	\
 }										\
 static void py_type##_dealloc(py_type *self)					\
 {										\
+	if (self->destroy)							\
+		obj_destroy(self->ptrObj);					\
 	ptr_free(self->ptrObj);							\
 	Py_TYPE(self)->tp_free(self);						\
 }										\

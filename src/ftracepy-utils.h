@@ -46,6 +46,8 @@ PyObject *PyTep_get_event(PyTep *self, PyObject *args,
 
 PyObject *PyFtrace_dir(PyObject *self);
 
+PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);
+
 PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 						   PyObject *kwargs);
 

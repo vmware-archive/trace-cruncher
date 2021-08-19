@@ -25,7 +25,7 @@ static PyMethodDef PyTepRecord_methods[] = {
 	{NULL}
 };
 
-C_OBJECT_WRAPPER(tep_record, PyTepRecord, NO_FREE)
+C_OBJECT_WRAPPER(tep_record, PyTepRecord, NO_DESTROY, NO_FREE)
 
 static PyMethodDef PyTepEvent_methods[] = {
 	{"name",
@@ -55,7 +55,7 @@ static PyMethodDef PyTepEvent_methods[] = {
 	{NULL}
 };
 
-C_OBJECT_WRAPPER(tep_event, PyTepEvent, NO_FREE)
+C_OBJECT_WRAPPER(tep_event, PyTepEvent, NO_DESTROY, NO_FREE)
 
 static PyMethodDef PyTep_methods[] = {
 	{"init_local",
@@ -71,13 +71,18 @@ static PyMethodDef PyTep_methods[] = {
 	{NULL}
 };
 
-C_OBJECT_WRAPPER(tep_handle, PyTep, tep_free)
+C_OBJECT_WRAPPER(tep_handle, PyTep, NO_DESTROY, tep_free)
 
 static PyMethodDef ftracepy_methods[] = {
 	{"dir",
 	 (PyCFunction) PyFtrace_dir,
 	 METH_NOARGS,
 	 "Get the absolute path to the tracefs directory."
+	},
+	{"detach",
+	 (PyCFunction) PyFtrace_detach,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Detach object from the \'ftracepy\' module."
 	},
 	{"create_instance",
 	 (PyCFunction) PyFtrace_create_instance,

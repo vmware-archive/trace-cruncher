@@ -536,6 +536,26 @@ PyObject *PyFtrace_dir(PyObject *self)
 	return PyUnicode_FromString(tracefs_tracing_dir());
 }
 
+PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	static char *kwlist[] = {"object", NULL};
+	PyFtrace_Object_HEAD *obj_head;
+	PyObject *py_obj = NULL;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "O",
+					 kwlist,
+					 &py_obj)) {
+		return false;
+	}
+
+	obj_head = (PyFtrace_Object_HEAD *)py_obj;
+	obj_head->destroy = false;
+
+	Py_RETURN_NONE;
+}
+
 static char aname_pool[] =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
