@@ -99,20 +99,12 @@ class kprobe_base(event):
         """
         super().__init__(system=ft.tc_event_system(), name=name, static=False)
         self.func = func
+        self.kp = None
 
     def set_function(self, name):
         """ Set the name of the function to be traced.
         """
         self.func = name
-
-    def unregister(self):
-        """ Unregister this probe from Ftrace.
-        """
-        inst_list = self.instance_list.copy()
-        for instance in inst_list:
-            self.disable(instance)
-
-        ft.unregister_kprobe(event=self.name);
 
 
 class kprobe(kprobe_base):
@@ -176,7 +168,7 @@ class kprobe(kprobe_base):
         """
         probe = ' '.join('{!s}={!s}'.format(key,val) for (key, val) in self.fields.items())
 
-        ft.register_kprobe(event=self.name, function=self.func, probe=probe);
+        self.kp = ft.register_kprobe(event=self.name, function=self.func, probe=probe);
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
 
 
@@ -206,5 +198,5 @@ class kretval_probe(kprobe_base):
     def register(self):
         """ Register this probe to Ftrace.
         """
-        ft.register_kprobe(event=self.name, function=self.func);
+        self.kp = ft.register_kprobe(event=self.name, function=self.func);
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)

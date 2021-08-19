@@ -403,34 +403,17 @@ class KprobeTestCase(unittest.TestCase):
         evt2_func = 'do_sys_openat2'
         evt2_prove = 'file=+u0($arg2):ustring'
 
-        ft.register_kprobe(event=evt1, function=evt1_func,
-                           probe=evt1_prove)
-        all_kprobes = ft.registered_kprobes()
-        self.assertEqual(len(all_kprobes), 1)
-        self.assertTrue(evt1 in all_kprobes[0])
-        self.assertTrue(evt1_func in all_kprobes[0])
-        self.assertTrue(evt1_prove in all_kprobes[0])
+        kp1 = ft.register_kprobe(event=evt1, function=evt1_func,
+                                 probe=evt1_prove)
+        self.assertEqual(evt1, kp1.event())
+        self.assertEqual(evt1_func, kp1.function())
+        self.assertEqual(evt1_prove, kp1.probe())
 
-        ft.unregister_kprobe(event=evt1)
-        all_kprobes = ft.registered_kprobes()
-        self.assertEqual(len(all_kprobes), 0)
-
-        ft.register_kprobe(event=evt1, function=evt1_func,
-                           probe=evt1_prove)
-        ft.register_kprobe(event=evt2, function=evt2_func,
-                           probe=evt2_prove)
-        all_kprobes = ft.registered_kprobes()
-        self.assertEqual(len(all_kprobes), 2)
-        self.assertTrue(evt1 in all_kprobes[0])
-        self.assertTrue(evt1_func in all_kprobes[0])
-        self.assertTrue(evt1_prove in all_kprobes[0])
-        self.assertTrue(evt2 in all_kprobes[1])
-        self.assertTrue(evt2_func in all_kprobes[1])
-        self.assertTrue(evt2_prove in all_kprobes[1])
-
-        ft.unregister_kprobe(event='ALL')
-        all_kprobes = ft.registered_kprobes()
-        self.assertEqual(len(all_kprobes), 0)
+        kp2 = ft.register_kprobe(event=evt2, function=evt2_func,
+                                 probe=evt2_prove)
+        self.assertEqual(evt2, kp2.event())
+        self.assertEqual(evt2_func, kp2.function())
+        self.assertEqual(evt2_prove, kp2.probe())
 
 
     def test_enable_kprobe(self):
@@ -438,18 +421,16 @@ class KprobeTestCase(unittest.TestCase):
         evt1_func = 'do_mkdirat'
         evt1_prove = 'path=+u0($arg2):ustring'
 
-        ft.register_kprobe(event=evt1, function=evt1_func,
-                           probe=evt1_prove)
+        kp1 = ft.register_kprobe(event=evt1, function=evt1_func,
+                                 probe=evt1_prove)
         inst = ft.create_instance(instance_name)
-        ft.enable_kprobe(instance=inst, event=evt1)
-        ret = ft.kprobe_is_enabled(instance=inst, event=evt1)
+        kp1.enable(instance=inst)
+        ret = kp1.is_enabled(instance=inst)
         self.assertEqual(ret, '1')
 
-        ft.disable_kprobe(instance=inst, event=evt1)
-        ret = ft.kprobe_is_enabled(instance=inst, event=evt1)
+        kp1.disable(instance=inst)
+        ret = kp1.is_enabled(instance=inst)
         self.assertEqual(ret, '0')
-
-        ft.unregister_kprobe(event='ALL')
 
 
 class TracingOnTestCase(unittest.TestCase):

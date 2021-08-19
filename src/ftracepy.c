@@ -107,11 +107,36 @@ static PyMethodDef PyKprobe_methods[] = {
 	 METH_NOARGS,
 	 "Get the kprobe event definition."
 	},
+	{"set_filter",
+	 (PyCFunction) PyKprobe_set_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a filter for a kprobe."
+	},
+	{"clear_filter",
+	 (PyCFunction) PyKprobe_clear_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Clear the filter of a kprobe."
+	},
+	{"enable",
+	 (PyCFunction) PyKprobe_enable,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Enable kprobe event."
+	},
+	{"disable",
+	 (PyCFunction) PyKprobe_disable,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Disable kprobe event."
+	},
+	{"is_enabled",
+	 (PyCFunction) PyKprobe_is_enabled,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Check if kprobe event is enabled."
+	},
 	{NULL, NULL, 0, NULL}
 };
 
 C_OBJECT_WRAPPER(ftracepy_kprobe, PyKprobe,
-		 NO_DESTROY,
+		 ftracepy_kprobe_destroy,
 		 ftracepy_kprobe_free)
 
 static PyMethodDef ftracepy_methods[] = {
@@ -255,46 +280,6 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Define a kretprobe."
 	},
-	{"unregister_kprobe",
-	 (PyCFunction) PyFtrace_unregister_kprobe,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a kprobe."
-	},
-	{"registered_kprobes",
-	 (PyCFunction) PyFtrace_registered_kprobes,
-	 METH_NOARGS,
-	 "Get all registered kprobes."
-	},
-	{"registered_kprobe_names",
-	 (PyCFunction) PyFtrace_registered_kprobe_names,
-	 METH_NOARGS,
-	 "Get the names of all registered kprobes."
-	},
-	{"set_kprobe_filter",
-	 (PyCFunction) PyFtrace_set_kprobe_filter,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a filter for a kprobe."
-	},
-	{"clear_kprobe_filter",
-	 (PyCFunction) PyFtrace_clear_kprobe_filter,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Clear the filter of a kprobe."
-	},
-	{"enable_kprobe",
-	 (PyCFunction) PyFtrace_enable_kprobe,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable kprobe event."
-	},
-	{"disable_kprobe",
-	 (PyCFunction) PyFtrace_disable_kprobe,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable kprobe event."
-	},
-	{"kprobe_is_enabled",
-	 (PyCFunction) PyFtrace_kprobe_is_enabled,
-	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if kprobe event is enabled."
-	},
 	{"set_ftrace_loglevel",
 	 (PyCFunction) PyFtrace_set_ftrace_loglevel,
 	 METH_VARARGS | METH_KEYWORDS,
@@ -362,7 +347,7 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	TRACECRUNCHER_ERROR = PyErr_NewException("tracecruncher.tc_error",
 						 NULL, NULL);
 
-	PyObject *module =  PyModule_Create(&ftracepy_module);
+	PyObject *module = PyModule_Create(&ftracepy_module);
 
 	PyModule_AddObject(module, "tep_handle", (PyObject *) &PyTepType);
 	PyModule_AddObject(module, "tep_event", (PyObject *) &PyTepEventType);

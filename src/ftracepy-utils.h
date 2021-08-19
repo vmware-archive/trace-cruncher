@@ -26,6 +26,8 @@ C_OBJECT_WRAPPER_DECLARE(tracefs_instance, PyTfsInstance)
 
 struct ftracepy_kprobe;
 
+void ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp);
+
 void ftracepy_kprobe_free(struct ftracepy_kprobe *kp);
 
 C_OBJECT_WRAPPER_DECLARE(ftracepy_kprobe, PyKprobe);
@@ -61,6 +63,21 @@ PyObject *PyKprobe_system(PyKprobe *self);
 PyObject *PyKprobe_function(PyKprobe *self);
 
 PyObject *PyKprobe_probe(PyKprobe *self);
+
+PyObject *PyKprobe_set_filter(PyKprobe *self, PyObject *args,
+					      PyObject *kwargs);
+
+PyObject *PyKprobe_clear_filter(PyKprobe *self, PyObject *args,
+						PyObject *kwargs);
+
+PyObject *PyKprobe_enable(PyKprobe *self, PyObject *args,
+					  PyObject *kwargs);
+
+PyObject *PyKprobe_disable(PyKprobe *self, PyObject *args,
+					   PyObject *kwargs);
+
+PyObject *PyKprobe_is_enabled(PyKprobe *self, PyObject *args,
+					      PyObject *kwargs);
 
 PyObject *PyFtrace_dir(PyObject *self);
 
@@ -142,28 +159,6 @@ PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
 
 PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
 						      PyObject *kwargs);
-
-PyObject *PyFtrace_unregister_kprobe(PyObject *self, PyObject *args,
-						     PyObject *kwargs);
-
-PyObject *PyFtrace_registered_kprobes(PyObject *self);
-
-PyObject *PyFtrace_registered_kprobe_names(PyObject *self);
-
-PyObject *PyFtrace_set_kprobe_filter(PyObject *self, PyObject *args,
-						     PyObject *kwargs);
-
-PyObject *PyFtrace_clear_kprobe_filter(PyObject *self, PyObject *args,
-						       PyObject *kwargs);
-
-PyObject *PyFtrace_enable_kprobe(PyObject *self, PyObject *args,
-						 PyObject *kwargs);
-
-PyObject *PyFtrace_disable_kprobe(PyObject *self, PyObject *args,
-						  PyObject *kwargs);
-
-PyObject *PyFtrace_kprobe_is_enabled(PyObject *self, PyObject *args,
-						     PyObject *kwargs);
 
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs);
