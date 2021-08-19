@@ -86,6 +86,34 @@ C_OBJECT_WRAPPER(tracefs_instance, PyTfsInstance,
 		 tracefs_instance_destroy,
 		 tracefs_instance_free)
 
+static PyMethodDef PyKprobe_methods[] = {
+	{"event",
+	 (PyCFunction) PyKprobe_event,
+	 METH_NOARGS,
+	 "Get the name of the kprobe event."
+	},
+	{"system",
+	 (PyCFunction) PyKprobe_system,
+	 METH_NOARGS,
+	 "Get the system name of the kprobe event."
+	},
+	{"function",
+	 (PyCFunction) PyKprobe_function,
+	 METH_NOARGS,
+	 "Get the function name of the kprobe event."
+	},
+	{"probe",
+	 (PyCFunction) PyKprobe_probe,
+	 METH_NOARGS,
+	 "Get the kprobe event definition."
+	},
+	{NULL, NULL, 0, NULL}
+};
+
+C_OBJECT_WRAPPER(ftracepy_kprobe, PyKprobe,
+		 NO_DESTROY,
+		 ftracepy_kprobe_free)
+
 static PyMethodDef ftracepy_methods[] = {
 	{"dir",
 	 (PyCFunction) PyFtrace_dir,
@@ -322,6 +350,9 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	if (!PyTfsInstanceTypeInit())
 		return NULL;
 
+	if (!PyKprobeTypeInit())
+		return NULL;
+
 	TFS_ERROR = PyErr_NewException("tracecruncher.ftracepy.tfs_error",
 				       NULL, NULL);
 
@@ -337,6 +368,7 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	PyModule_AddObject(module, "tep_event", (PyObject *) &PyTepEventType);
 	PyModule_AddObject(module, "tep_record", (PyObject *) &PyTepRecordType);
 	PyModule_AddObject(module, "tracefs_instance", (PyObject *) &PyTfsInstanceType);
+	PyModule_AddObject(module, "ftracepy_kprobe", (PyObject *) &PyKprobeType);
 
 	PyModule_AddObject(module, "tfs_error", TFS_ERROR);
 	PyModule_AddObject(module, "tep_error", TEP_ERROR);

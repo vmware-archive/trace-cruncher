@@ -24,6 +24,12 @@ C_OBJECT_WRAPPER_DECLARE(tep_handle, PyTep)
 
 C_OBJECT_WRAPPER_DECLARE(tracefs_instance, PyTfsInstance)
 
+struct ftracepy_kprobe;
+
+void ftracepy_kprobe_free(struct ftracepy_kprobe *kp);
+
+C_OBJECT_WRAPPER_DECLARE(ftracepy_kprobe, PyKprobe);
+
 PyObject *PyTepRecord_time(PyTepRecord* self);
 
 PyObject *PyTepRecord_cpu(PyTepRecord* self);
@@ -47,6 +53,14 @@ PyObject *PyTep_get_event(PyTep *self, PyObject *args,
 				       PyObject *kwargs);
 
 PyObject *PyTfsInstance_dir(PyTfsInstance *self);
+
+PyObject *PyKprobe_event(PyKprobe *self);
+
+PyObject *PyKprobe_system(PyKprobe *self);
+
+PyObject *PyKprobe_function(PyKprobe *self);
+
+PyObject *PyKprobe_probe(PyKprobe *self);
 
 PyObject *PyFtrace_dir(PyObject *self);
 

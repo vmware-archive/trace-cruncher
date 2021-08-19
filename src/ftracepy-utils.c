@@ -1366,6 +1366,40 @@ PyObject *PyFtrace_tc_event_system(PyObject *self)
 	return PyUnicode_FromString(TC_SYS);
 }
 
+struct ftracepy_kprobe {
+	char *event;
+	char *function;
+	char *probe;
+};
+
+PyObject *PyKprobe_event(PyKprobe *self)
+{
+	return PyUnicode_FromString(self->ptrObj->event);
+}
+
+PyObject *PyKprobe_system(PyKprobe *self)
+{
+	return PyUnicode_FromString(TC_SYS);
+}
+
+PyObject *PyKprobe_function(PyKprobe *self)
+{
+	return PyUnicode_FromString(self->ptrObj->function);
+}
+
+PyObject *PyKprobe_probe(PyKprobe *self)
+{
+	return PyUnicode_FromString(self->ptrObj->probe);
+}
+
+void ftracepy_kprobe_free(struct ftracepy_kprobe *kp)
+{
+	free(kp->event);
+	free(kp->function);
+	free(kp->probe);
+	free(kp);
+}
+
 static int unregister_kprobe(const char *event)
 {
 	return tracefs_kprobe_clear_probe(TC_SYS, event, true);
