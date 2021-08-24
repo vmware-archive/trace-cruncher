@@ -84,8 +84,8 @@ def main():
                           libraries=['kshark'])
 
     setup(name='tracecruncher',
-          version='0.1.0',
-          description='NumPy based interface for accessing tracing data in Python.',
+          version='0.2.0',
+          description='Interface for accessing Linux tracing data in Python.',
           author='Yordan Karadzhov (VMware)',
           author_email='y.karadz@gmail.com',
           url='https://github.com/vmware/trace-cruncher',
@@ -93,7 +93,7 @@ def main():
           packages=find_packages(),
           ext_modules=[module_ft, module_data, module_ks],
           classifiers=[
-              'Development Status :: 3 - Alpha',
+              'Development Status :: 4 - Beta',
               'Programming Language :: Python :: 3',
               ]
           )
