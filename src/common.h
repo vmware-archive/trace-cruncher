@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1 */
 
 /*
- * Copyright (C) 2017 VMware Inc, Yordan Karadzhov <y.karadz@gmail.com>
+ * Copyright 2017 VMware Inc, Yordan Karadzhov <y.karadz@gmail.com>
  */
 
 #ifndef _TC_COMMON_H

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-2.1
 
 /*
- * Copyright (C) 2019 VMware Inc, Yordan Karadzhov (VMware) <y.karadz@gmail.com>
+ * Copyright 2019 VMware Inc, Yordan Karadzhov (VMware) <y.karadz@gmail.com>
  */
 
 /** Use GNU C Library. */

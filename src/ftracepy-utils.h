@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1 */
 
 /*
- * Copyright (C) 2021 VMware Inc, Yordan Karadzhov <y.karadz@gmail.com>
+ * Copyright 2021 VMware Inc, Yordan Karadzhov <y.karadz@gmail.com>
  */
 
 #ifndef _TC_FTRACE_PY_UTILS

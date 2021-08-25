@@ -3,7 +3,7 @@
 """
 SPDX-License-Identifier: CC-BY-4.0
 
-Copyright (C) 2021 VMware Inc, Yordan Karadzhov (VMware) <y.karadz@gmail.com>
+Copyright 2021 VMware Inc, Yordan Karadzhov (VMware) <y.karadz@gmail.com>
 """
 
 import sys
