@@ -177,6 +177,12 @@ PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
 
 PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs);
 
+PyObject *PyFtrace_error_log(PyObject *self, PyObject *args,
+					     PyObject *kwargs);
+
+PyObject *PyFtrace_clear_error_log(PyObject *self, PyObject *args,
+						   PyObject *kwargs);
+
 void PyFtrace_at_exit(void);
 
 #endif

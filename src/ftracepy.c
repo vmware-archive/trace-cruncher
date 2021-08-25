@@ -310,6 +310,16 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Trace only particular process."
 	},
+	{"error_log",
+	 (PyCFunction) PyFtrace_error_log,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Get the content of the error log."
+	},
+	{"clear_error_log",
+	 (PyCFunction) PyFtrace_clear_error_log,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Clear the content of the error log."
+	},
 	{NULL, NULL, 0, NULL}
 };
 

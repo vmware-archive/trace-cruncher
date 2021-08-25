@@ -23,6 +23,38 @@ PyObject *TFS_ERROR;
 PyObject *TEP_ERROR;
 PyObject *TRACECRUNCHER_ERROR;
 
+static const char *get_instance_name(struct tracefs_instance *instance);
+
+static char *tfs_error_log(struct tracefs_instance *instance, bool *ok)
+{;
+	char *err_log;
+
+	errno = 0;
+	err_log = tracefs_error_all(instance);
+	if (errno && !err_log) {
+		PyErr_Format(TFS_ERROR,
+			     "Unable to get error log for instance \'%s\'.",
+		             get_instance_name(instance));
+	}
+
+	if (ok)
+		*ok = errno ? false : true;
+
+	return err_log;
+}
+
+static bool tfs_clear_error_log(struct tracefs_instance *instance)
+{
+	if (tracefs_error_clear(instance) < 0) {
+		PyErr_Format(TFS_ERROR,
+			     "Unable to clear error log for instance \'%s\'.",
+			     get_instance_name(instance));
+		return false;
+	}
+
+	return true;
+}
+
 PyObject *PyTepRecord_time(PyTepRecord* self)
 {
 	unsigned long ts = self->ptrObj ? self->ptrObj->ts : 0;
@@ -2046,6 +2078,42 @@ PyObject *PyFtrace_hook2pid(PyObject *self, PyObject *args, PyObject *kwargs)
 		return NULL;
 
 	if (!hook2pid(instance, pid_val, fork))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_error_log(PyObject *self, PyObject *args,
+					     PyObject *kwargs)
+{
+	struct tracefs_instance *instance;
+	PyObject *ret = NULL;
+	char *err_log;
+	bool ok;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	err_log = tfs_error_log(instance, &ok);
+	if (err_log) {
+		ret = PyUnicode_FromString(err_log);
+		free(err_log);
+	} else if (ok) {
+		ret = PyUnicode_FromString("(nil)");
+	}
+
+	return ret;
+}
+
+PyObject *PyFtrace_clear_error_log(PyObject *self, PyObject *args,
+						   PyObject *kwargs)
+{
+	struct tracefs_instance *instance;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	if (!tfs_clear_error_log(instance))
 		return NULL;
 
 	Py_RETURN_NONE;
