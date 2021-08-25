@@ -55,6 +55,45 @@ static bool tfs_clear_error_log(struct tracefs_instance *instance)
 	return true;
 }
 
+static void TfsError_fmt(struct tracefs_instance *instance,
+			 const char *fmt, ...)
+{
+	char *tfs_err_log = tfs_error_log(instance, NULL);
+	va_list args;
+
+	va_start(args, fmt);
+	if (tfs_err_log) {
+		char *tc_err_log;
+
+		vasprintf(&tc_err_log, fmt, args);
+		va_end(args);
+
+		PyErr_Format(TEP_ERROR, "%s\ntfs_error: %s",
+			     tc_err_log, tfs_err_log);
+
+		tfs_clear_error_log(instance);
+		free(tfs_err_log);
+		free(tc_err_log);
+	} else {
+		PyErr_FormatV(TEP_ERROR, fmt, args);
+		va_end(args);
+	}
+}
+
+static void TfsError_setstr(struct tracefs_instance *instance,
+			    const char *msg)
+{
+	char *tfs_err_log = tfs_error_log(instance, NULL);
+
+	if (tfs_err_log) {
+		PyErr_Format(TEP_ERROR, "%s\ntfs_error: %s", msg, tfs_err_log);
+		tfs_clear_error_log(instance);
+		free(tfs_err_log);
+	} else {
+		PyErr_SetString(TEP_ERROR, msg);
+	}
+}
+
 PyObject *PyTepRecord_time(PyTepRecord* self)
 {
 	unsigned long ts = self->ptrObj ? self->ptrObj->ts : 0;
@@ -284,7 +323,7 @@ PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 		const char **sys_names = get_arg_list(system_list);
 
 		if (!sys_names) {
-			PyErr_SetString(TFS_ERROR,
+			TfsError_setstr(NULL,
 					"Inconsistent \"systems\" argument.");
 			return NULL;
 		}
@@ -296,8 +335,7 @@ PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 	}
 
 	if (!tep) {
-		PyErr_Format(TFS_ERROR,
-			     "Failed to get local events from \'%s\'.",
+		TfsError_fmt(NULL, "Failed to get local events from \'%s\'.",
 			     dir_str);
 		return NULL;
 	}
@@ -332,7 +370,7 @@ PyObject *PyTep_get_event(PyTep *self, PyObject *args,
 static bool check_file(struct tracefs_instance *instance, const char *file)
 {
 	if (!tracefs_file_exists(instance, file)) {
-		PyErr_Format(TFS_ERROR, "File %s does not exist.", file);
+		TfsError_fmt(instance, "File %s does not exist.", file);
 		return false;
 	}
 
@@ -342,7 +380,7 @@ static bool check_file(struct tracefs_instance *instance, const char *file)
 static bool check_dir(struct tracefs_instance *instance, const char *dir)
 {
 	if (!tracefs_dir_exists(instance, dir)) {
-		PyErr_Format(TFS_ERROR, "Directory %s does not exist.", dir);
+		TfsError_fmt(instance, "Directory %s does not exist.", dir);
 		return false;
 	}
 
@@ -367,7 +405,7 @@ static int write_to_file(struct tracefs_instance *instance,
 
 	size = tracefs_instance_file_write(instance, file, val);
 	if (size <= 0) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Can not write \'%s\' to file \'%s\' (inst: \'%s\').",
 			     val, file, get_instance_name(instance));
 		PyErr_Print();
@@ -387,7 +425,7 @@ static int append_to_file(struct tracefs_instance *instance,
 
 	size = tracefs_instance_file_append(instance, file, val);
 	if (size <= 0) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Can not append \'%s\' to file \'%s\' (inst: \'%s\').",
 			     val, file, get_instance_name(instance));
 		PyErr_Print();
@@ -407,7 +445,7 @@ static int read_from_file(struct tracefs_instance *instance,
 
 	*val = tracefs_instance_file_read(instance, file, &size);
 	if (size < 0)
-		PyErr_Format(TFS_ERROR, "Can not read from file %s", file);
+		TfsError_fmt(instance, "Can not read from file %s", file);
 
 	return size;
 }
@@ -530,7 +568,7 @@ PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 	if (!instance ||
 	    !tracefs_instance_exists(name) ||
 	    !tracefs_instance_is_new(instance)) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Failed to create new trace instance \'%s\'.",
 			     name);
 		return NULL;
@@ -634,7 +672,7 @@ PyObject *PyFtrace_set_current_tracer(PyObject *self, PyObject *args,
 		}
 
 		if (!all_tracers || !all_tracers[i]) {
-			PyErr_Format(TFS_ERROR,
+			TfsError_fmt(instance,
 				     "Tracer \'%s\' is not available.",
 				     tracer);
 			return NULL;
@@ -644,7 +682,7 @@ PyObject *PyFtrace_set_current_tracer(PyObject *self, PyObject *args,
 	}
 
 	if (!write_to_file_and_check(instance, file, tracer)) {
-		PyErr_Format(TFS_ERROR, "Failed to enable tracer \'%s\'",
+		TfsError_fmt(instance, "Failed to enable tracer \'%s\'",
 			     tracer);
 		return NULL;
 	}
@@ -763,7 +801,7 @@ bool get_event_enable_file(struct tracefs_instance *instance,
  fail:
 	instance_name =
 		instance ? tracefs_instance_get_name(instance) : "top";
-	PyErr_Format(TFS_ERROR,
+	TfsError_fmt(instance,
 		     "Failed to locate event:\n Instance: %s  System: %s  Event: %s",
 		     instance_name, system, event);
 	free(buff);
@@ -789,7 +827,7 @@ static bool event_enable_disable(struct tracefs_instance *instance,
 		ret = tracefs_event_disable(instance, system, event);
 
 	if (ret != 0) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Failed to enable/disable event:\n System: %s  Event: %s",
 			     system ? system : "NULL",
 			     event ? event : "NULL");
@@ -879,7 +917,7 @@ static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 		    is_all(PyUnicode_DATA(event_list))) {
 			return event_enable_disable(instance, NULL, NULL, enable);
 		} else {
-			PyErr_SetString(TFS_ERROR,
+			TfsError_setstr(instance,
 					"Failed to enable events for unspecified system");
 			return false;
 		}
@@ -887,7 +925,7 @@ static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 
 	systems = get_arg_list(system_list);
 	if (!systems) {
-		PyErr_SetString(TFS_ERROR, "Inconsistent \"systems\" argument.");
+		TfsError_setstr(instance, "Inconsistent \"systems\" argument.");
 		return false;
 	}
 
@@ -927,7 +965,7 @@ static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 	return true;
 
  fail_with_err:
-	PyErr_SetString(TFS_ERROR, "Inconsistent \"events\" argument.");
+	TfsError_setstr(instance, "Inconsistent \"events\" argument.");
 
  fail:
 	free(systems);
@@ -1026,7 +1064,7 @@ PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
 
 	sprintf(path, "events/%s/%s/filter", system, event);
 	if (!write_to_file_and_check(instance, path, filter)) {
-		PyErr_SetString(TFS_ERROR, "Failed to set event filter");
+		TfsError_setstr(instance, "Failed to set event filter");
 		return NULL;
 	}
 
@@ -1057,7 +1095,7 @@ PyObject *PyFtrace_clear_event_filter(PyObject *self, PyObject *args,
 
 	sprintf(path, "events/%s/%s/filter", system, event);
 	if (!write_to_file(instance, path, OFF)) {
-		PyErr_SetString(TFS_ERROR, "Failed to clear event filter");
+		TfsError_setstr(instance, "Failed to clear event filter");
 		return NULL;
 	}
 
@@ -1073,7 +1111,7 @@ static bool tracing_ON(struct tracefs_instance *instance)
 		const char *instance_name =
 			instance ? tracefs_instance_get_name(instance) : "top";
 
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Failed to start tracing (Instance: %s)",
 			     instance_name);
 		return false;
@@ -1105,7 +1143,7 @@ static bool tracing_OFF(struct tracefs_instance *instance)
 		const char *instance_name =
 			instance ? tracefs_instance_get_name(instance) : "top";
 
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Failed to stop tracing (Instance: %s)",
 			     instance_name);
 		return false;
@@ -1142,7 +1180,7 @@ PyObject *PyFtrace_is_tracing_ON(PyObject *self, PyObject *args,
 		const char *instance_name =
 			instance ? tracefs_instance_get_name(instance) : "top";
 
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Failed to check if tracing is ON (Instance: %s)",
 			     instance_name);
 		return NULL;
@@ -1203,7 +1241,7 @@ static bool set_pid(struct tracefs_instance *instance,
 	return true;
 
  fail:
-	PyErr_Format(TFS_ERROR, "Failed to set PIDs for \"%s\"",
+	TfsError_fmt(instance, "Failed to set PIDs for \"%s\"",
 		     file);
 	return false;
 }
@@ -1267,7 +1305,7 @@ static bool set_opt(struct tracefs_instance *instance,
 
 	if (sprintf(file, "options/%s", opt) <= 0 ||
 	    !write_to_file_and_check(instance, file, val)) {
-		PyErr_Format(TFS_ERROR, "Failed to set option \"%s\"", opt);
+		TfsError_fmt(instance, "Failed to set option \"%s\"", opt);
 		return false;
 	}
 
@@ -1399,7 +1437,7 @@ static bool register_kprobe(const char *event,
 			    const char *probe)
 {
 	if (tracefs_kprobe_raw(TC_SYS, event, function, probe) < 0) {
-		PyErr_Format(TFS_ERROR, "Failed to register kprobe \'%s\'.",
+		TfsError_fmt(NULL, "Failed to register kprobe \'%s\'.",
 			     event);
 		return false;
 	}
@@ -1412,7 +1450,7 @@ static bool register_kretprobe(const char *event,
 			       const char *probe)
 {
 	if (tracefs_kretprobe_raw(TC_SYS, event, function, probe) < 0) {
-		PyErr_Format(TFS_ERROR, "Failed to register kretprobe \'%s\'.",
+		TfsError_fmt(NULL, "Failed to register kretprobe \'%s\'.",
 			     event);
 		return false;
 	}
@@ -1423,7 +1461,7 @@ static bool register_kretprobe(const char *event,
 static bool unregister_kprobe(const char *event)
 {
 	if (tracefs_kprobe_clear_probe(TC_SYS, event, true) < 0) {
-		PyErr_Format(TFS_ERROR, "Failed to unregister kprobe \'%s\'.",
+		TfsError_fmt(NULL, "Failed to unregister kprobe \'%s\'.",
 			     event);
 		return false;
 	}
@@ -1572,7 +1610,7 @@ PyObject *PyKprobe_set_filter(PyKprobe *self, PyObject *args,
 
 	sprintf(path, "events/%s/%s/filter", TC_SYS, self->ptrObj->event);
 	if (!write_to_file_and_check(instance, path, filter)) {
-		PyErr_SetString(TFS_ERROR, "Failed to set kprobe filter.");
+		TfsError_setstr(instance, "Failed to set kprobe filter.");
 		return NULL;
 	}
 
@@ -1600,7 +1638,7 @@ PyObject *PyKprobe_clear_filter(PyKprobe *self, PyObject *args,
 
 	sprintf(path, "events/%s/%s/filter", TC_SYS, self->ptrObj->event);
 	if (!write_to_file(instance, path, OFF)) {
-		PyErr_SetString(TFS_ERROR, "Failed to clear kprobe filter.");
+		TfsError_setstr(instance, "Failed to clear kprobe filter.");
 		return NULL;
 	}
 
@@ -1724,7 +1762,7 @@ static bool hook2pid(struct tracefs_instance *instance, PyObject *pid_val, int f
 	return true;
 
  fail:
-	PyErr_SetString(TFS_ERROR, "Failed to hook to PID");
+	TfsError_setstr(instance, "Failed to hook to PID");
 	PyErr_Print();
 	return false;
 }
@@ -1741,7 +1779,7 @@ static void start_tracing_procces(struct tracefs_instance *instance,
 
 	tracing_ON(instance);
 	if (execvpe(argv[0], argv, envp) < 0) {
-		PyErr_Format(TFS_ERROR, "Failed to exec \'%s\'",
+		TfsError_fmt(instance, "Failed to exec \'%s\'",
 			     argv[0]);
 	}
 
@@ -1755,14 +1793,14 @@ static PyObject *get_callback_func(const char *plugin_name, const char * py_call
 	py_name = PyUnicode_FromString(plugin_name);
 	py_module = PyImport_Import(py_name);
 	if (!py_module) {
-		PyErr_Format(TFS_ERROR, "Failed to import plugin \'%s\'",
+		TfsError_fmt(NULL, "Failed to import plugin \'%s\'",
 			     plugin_name);
 		return NULL;
 	}
 
 	py_func = PyObject_GetAttrString(py_module, py_callback);
 	if (!py_func || !PyCallable_Check(py_func)) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(NULL,
 			     "Failed to import callback from plugin \'%s\'",
 			     plugin_name);
 		return NULL;
@@ -1818,7 +1856,7 @@ static bool notrace_this_pid(struct tracefs_instance *instance)
 
 	if (!pid2file(instance, "set_ftrace_notrace_pid", pid, true) ||
 	    !pid2file(instance, "set_event_notrace_pid", pid, true)) {
-		PyErr_SetString(TFS_ERROR,
+		TfsError_setstr(instance,
 			        "Failed to desable tracing for \'this\' process.");
 		return false;
 	}
@@ -1850,7 +1888,7 @@ static bool init_callback_tep(struct tracefs_instance *instance,
 
 	*tep = tracefs_local_events(tracefs_instance_get_dir(instance));
 	if (!*tep) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(instance,
 			     "Unable to get 'tep' event from instance \'%s\'.",
 			     get_instance_name(instance));
 		return false;
@@ -1893,7 +1931,7 @@ PyObject *PyFtrace_trace_shell_process(PyObject *self, PyObject *args,
 
 	pid = fork();
 	if (pid < 0) {
-		PyErr_SetString(TFS_ERROR, "Failed to fork");
+		TfsError_setstr(instance, "Failed to fork");
 		return NULL;
 	}
 
@@ -1939,7 +1977,7 @@ PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
 		return NULL;
 
 	if (!PyList_CheckExact(py_argv)) {
-		PyErr_SetString(TFS_ERROR, "Failed to parse \'argv\' list");
+		TfsError_setstr(instance, "Failed to parse \'argv\' list");
 		return NULL;
 	}
 
@@ -1947,7 +1985,7 @@ PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
 
 	pid = fork();
 	if (pid < 0) {
-		PyErr_SetString(TFS_ERROR, "Failed to fork");
+		TfsError_setstr(instance, "Failed to fork");
 		return NULL;
 	}
 
@@ -1989,7 +2027,7 @@ PyObject *PyFtrace_read_trace(PyObject *self, PyObject *args,
 
 	tracing_ON(pipe_instance);
 	if (tracefs_trace_pipe_print(pipe_instance, 0) < 0) {
-		PyErr_Format(TFS_ERROR,
+		TfsError_fmt(pipe_instance,
 			     "Unable to read trace data from instance \'%s\'.",
 			     get_instance_name(pipe_instance));
 		return NULL;
