@@ -69,7 +69,7 @@ PyObject *PyTepRecord_cpu(PyTepRecord* self)
 
 PyObject *PyTepEvent_name(PyTepEvent* self)
 {
-	const char * name = self->ptrObj ? self->ptrObj->name : "nil";
+	const char *name = self->ptrObj ? self->ptrObj->name : TC_NIL_MSG;
 	return PyUnicode_FromString(name);
 }
 
@@ -170,7 +170,7 @@ PyObject *PyTepEvent_parse_record_field(PyTepEvent* self, PyObject *args,
 	}
 
 	if (!field_size)
-		return PyUnicode_FromString("(nil)");
+		return PyUnicode_FromString(TC_NIL_MSG);
 
 	if (field->flags & TEP_FIELD_IS_STRING) {
 		char *val_str = record->ptrObj->data + field_offset;
@@ -2099,7 +2099,7 @@ PyObject *PyFtrace_error_log(PyObject *self, PyObject *args,
 		ret = PyUnicode_FromString(err_log);
 		free(err_log);
 	} else if (ok) {
-		ret = PyUnicode_FromString("(nil)");
+		ret = PyUnicode_FromString(TC_NIL_MSG);
 	}
 
 	return ret;

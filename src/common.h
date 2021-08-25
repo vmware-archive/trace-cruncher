@@ -24,6 +24,8 @@
 
 static const char *NO_ARG = "/NONE/";
 
+#define TC_NIL_MSG	"(nil)"
+
 static inline bool is_all(const char *arg)
 {
 	const char all[] = "all";
