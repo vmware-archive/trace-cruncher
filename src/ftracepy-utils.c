@@ -475,13 +475,16 @@ static bool write_to_file_and_check(struct tracefs_instance *instance,
 	return ret == 0 ? true : false;
 }
 
-static PyObject *tfs_list2py_list(char **list)
+static PyObject *tfs_list2py_list(char **list, bool sort)
 {
 	PyObject *py_list = PyList_New(0);
 	int i;
 
 	for (i = 0; list && list[i]; i++)
 		PyList_Append(py_list, PyUnicode_FromString(list[i]));
+
+	if (sort)
+		PyList_Sort(py_list);
 
 	tracefs_list_free(list);
 
@@ -636,7 +639,7 @@ PyObject *PyFtrace_available_tracers(PyObject *self, PyObject *args,
 	if (!list)
 		return NULL;
 
-	return tfs_list2py_list(list);
+	return tfs_list2py_list(list, false);
 }
 
 PyObject *PyFtrace_set_current_tracer(PyObject *self, PyObject *args,
@@ -724,7 +727,7 @@ PyObject *PyFtrace_available_event_systems(PyObject *self, PyObject *args,
 	if (!list)
 		return NULL;
 
-	return tfs_list2py_list(list);
+	return tfs_list2py_list(list, false);
 }
 
 PyObject *PyFtrace_available_system_events(PyObject *self, PyObject *args,
@@ -750,10 +753,11 @@ PyObject *PyFtrace_available_system_events(PyObject *self, PyObject *args,
 
 	list = tracefs_system_events(tracefs_instance_get_dir(instance),
 				     system);
+
 	if (!list)
 		return NULL;
 
-	return tfs_list2py_list(list);
+	return tfs_list2py_list(list, false);
 }
 
 bool get_event_enable_file(struct tracefs_instance *instance,
