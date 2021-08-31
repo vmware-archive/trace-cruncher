@@ -111,19 +111,23 @@ class TracersTestCase(unittest.TestCase):
 
 class EventsTestCase(unittest.TestCase):
     def test_available_systems(self):
-        systems = ft.available_event_systems()
-        self.assertTrue(len(systems) > 1)
+        systems = ft.available_event_systems(sort=True)
+        self.assertTrue(len(systems) > 2)
         self.assertTrue('sched' in systems)
+        for i in range(len(systems) - 2):
+            self.assertTrue(systems[i] < systems[i + 1])
 
         inst = ft.create_instance(instance_name)
         systems = ft.available_event_systems(inst)
-        self.assertTrue(len(systems) > 1)
+        self.assertTrue(len(systems) > 2)
         self.assertTrue('sched' in systems)
 
     def test_available_system_events(self):
-        events = ft.available_system_events(system='sched')
-        self.assertTrue(len(events) > 1)
+        events = ft.available_system_events(system='sched', sort=True)
+        self.assertTrue(len(events) > 2)
         self.assertTrue('sched_switch' in events)
+        for i in range(len(events) - 2):
+            self.assertTrue(events[i] < events[i + 1])
 
         inst = ft.create_instance(instance_name)
         events = ft.available_system_events(instance=inst,
