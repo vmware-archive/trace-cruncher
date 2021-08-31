@@ -733,18 +733,20 @@ PyObject *PyFtrace_available_event_systems(PyObject *self, PyObject *args,
 PyObject *PyFtrace_available_system_events(PyObject *self, PyObject *args,
 							   PyObject *kwargs)
 {
-	static char *kwlist[] = {"system", "instance", NULL};
+	static char *kwlist[] = {"system", "instance", "sort", NULL};
 	struct tracefs_instance *instance;
 	PyObject *py_inst = NULL;
 	const char *system;
+	int sort = false;
 	char **list;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "s|O",
+					 "s|Op",
 					 kwlist,
 					 &system,
-					 &py_inst)) {
+					 &py_inst,
+					 &sort)) {
 		return NULL;
 	}
 
@@ -757,7 +759,7 @@ PyObject *PyFtrace_available_system_events(PyObject *self, PyObject *args,
 	if (!list)
 		return NULL;
 
-	return tfs_list2py_list(list, false);
+	return tfs_list2py_list(list, sort);
 }
 
 bool get_event_enable_file(struct tracefs_instance *instance,
