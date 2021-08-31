@@ -717,17 +717,29 @@ PyObject *PyFtrace_get_current_tracer(PyObject *self, PyObject *args,
 PyObject *PyFtrace_available_event_systems(PyObject *self, PyObject *args,
 							   PyObject *kwargs)
 {
+	static char *kwlist[] = {"instance", "sort", NULL};
 	struct tracefs_instance *instance;
+	PyObject *py_inst = NULL;
+	int sort = false;
 	char **list;
 
-	if (!get_instance_from_arg(args, kwargs, &instance))
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|Op",
+					 kwlist,
+					 &py_inst,
+					 &sort)) {
+		return false;
+	}
+
+	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
 	list = tracefs_event_systems(tracefs_instance_get_dir(instance));
 	if (!list)
 		return NULL;
 
-	return tfs_list2py_list(list, false);
+	return tfs_list2py_list(list, sort);
 }
 
 PyObject *PyFtrace_available_system_events(PyObject *self, PyObject *args,
