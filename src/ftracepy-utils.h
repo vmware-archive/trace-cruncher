@@ -86,6 +86,9 @@ PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);
 PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 						   PyObject *kwargs);
 
+PyObject *PyFtrace_find_instance(PyObject *self, PyObject *args,
+						 PyObject *kwargs);
+
 PyObject *PyFtrace_available_tracers(PyObject *self, PyObject *args,
 						     PyObject *kwargs);
 

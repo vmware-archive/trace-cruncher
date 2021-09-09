@@ -501,10 +501,15 @@ PyObject *PyFtrace_dir(PyObject *self)
 	return PyUnicode_FromString(tracefs_tracing_dir());
 }
 
+static void set_destroy_flag(PyObject *py_obj, bool val)
+{
+	PyFtrace_Object_HEAD *obj_head = (PyFtrace_Object_HEAD *)py_obj;
+	obj_head->destroy = val;
+}
+
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	static char *kwlist[] = {"object", NULL};
-	PyFtrace_Object_HEAD *obj_head;
 	PyObject *py_obj = NULL;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
@@ -515,8 +520,7 @@ PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs)
 		return false;
 	}
 
-	obj_head = (PyFtrace_Object_HEAD *)py_obj;
-	obj_head->destroy = false;
+	set_destroy_flag(py_obj, false);
 
 	Py_RETURN_NONE;
 }
@@ -581,6 +585,36 @@ PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 		tracing_OFF(instance);
 
 	return PyTfsInstance_New(instance);
+}
+
+PyObject *PyFtrace_find_instance(PyObject *self, PyObject *args,
+						 PyObject *kwargs)
+{
+	struct tracefs_instance *instance;
+	PyObject *py_inst;
+	const char *name;
+
+	static char *kwlist[] = {"name", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s",
+					 kwlist,
+					 &name)) {
+		return NULL;
+	}
+
+	instance = tracefs_instance_alloc(NULL, name);
+	if (!instance) {
+		TfsError_fmt(instance,
+			     "Failed to find trace instance \'%s\'.",
+			     name);
+		return NULL;
+	}
+
+	py_inst = PyTfsInstance_New(instance);
+	set_destroy_flag(py_inst, false);
+
+	return py_inst;
 }
 
 static bool get_optional_instance(PyObject *py_obj,

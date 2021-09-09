@@ -155,6 +155,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Create new tracefs instance."
 	},
+	{"find_instance",
+	 (PyCFunction) PyFtrace_find_instance,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Find an existing ftrace instance."
+	},
 	{"available_tracers",
 	 (PyCFunction) PyFtrace_available_tracers,
 	 METH_VARARGS | METH_KEYWORDS,

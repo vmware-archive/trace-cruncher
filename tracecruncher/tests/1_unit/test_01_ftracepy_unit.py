@@ -36,6 +36,18 @@ class InstanceTestCase(unittest.TestCase):
         instance_dir = tracefs_dir + '/instances/' + instance_name
         self.assertEqual(instance_dir, inst.dir())
 
+    def test_find(self):
+        inst = ft.create_instance(instance_name)
+        tracefs_dir = ft.dir();
+        instance_dir = tracefs_dir + '/instances/' + instance_name
+        inst_1 = ft.find_instance(instance_name)
+        self.assertEqual(instance_dir, inst_1.dir())
+
+        err='Failed to find trace instance'
+        with self.assertRaises(Exception) as context:
+            inst_2 = ft.find_instance(another_instance_name)
+        self.assertTrue(err in str(context.exception))
+
 
 class PyTepTestCase(unittest.TestCase):
     def test_init_local(self):
