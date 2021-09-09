@@ -83,6 +83,8 @@ PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);
 
+PyObject *PyFtrace_attach(PyObject *self, PyObject *args, PyObject *kwargs);
+
 PyObject *PyFtrace_create_instance(PyObject *self, PyObject *args,
 						   PyObject *kwargs);
 

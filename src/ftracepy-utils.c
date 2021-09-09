@@ -507,22 +507,32 @@ static void set_destroy_flag(PyObject *py_obj, bool val)
 	obj_head->destroy = val;
 }
 
-PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs)
+static PyObject *set_destroy(PyObject *args, PyObject *kwargs, bool destroy)
 {
 	static char *kwlist[] = {"object", NULL};
-	PyObject *py_obj = NULL;
+	PyObject *py_obj;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
 					 "O",
 					 kwlist,
 					 &py_obj)) {
-		return false;
+		return NULL;
 	}
 
-	set_destroy_flag(py_obj, false);
+	set_destroy_flag(py_obj, destroy);
 
 	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	return set_destroy(args, kwargs, false);
+}
+
+PyObject *PyFtrace_attach(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	return set_destroy(args, kwargs, true);
 }
 
 static char aname_pool[] =

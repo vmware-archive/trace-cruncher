@@ -48,6 +48,19 @@ class InstanceTestCase(unittest.TestCase):
             inst_2 = ft.find_instance(another_instance_name)
         self.assertTrue(err in str(context.exception))
 
+    def test_1_detach(self):
+        inst = ft.create_instance(instance_name)
+        ft.detach(inst)
+
+    def test_2_attach(self):
+        inst = ft.find_instance(instance_name)
+        ft.attach(inst)
+
+    def test_3_attach(self):
+        tracefs_dir = ft.dir();
+        instance_dir = tracefs_dir + '/instances/' + instance_name
+        self.assertFalse(os.path.isdir(instance_dir))
+
 
 class PyTepTestCase(unittest.TestCase):
     def test_init_local(self):
