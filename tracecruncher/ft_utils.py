@@ -29,6 +29,14 @@ def find_event_id(system, event):
     return tep.get_event(system=system, name=event).id()
 
 
+def short_kprobe_print(tep, events):
+    """ Register short (no probe address) print for these kprobe events.
+    """
+    for e in events:
+        if len(e.fields):
+            tep.short_kprobe_print(id=e.evt_id, system=e.system, event=e.name)
+
+
 class event:
     def __init__(self, system, name, static=True):
         """ Constructor.

@@ -83,6 +83,11 @@ static PyMethodDef PyTep_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Generic print of a trace event info."
 	},
+	{"short_kprobe_print",
+	 (PyCFunction) PyTep_short_kprobe_print,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Do not print the address of the probe."
+	},
 	{NULL}
 };
 

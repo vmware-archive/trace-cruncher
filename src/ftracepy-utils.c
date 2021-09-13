@@ -533,6 +533,44 @@ PyObject *PyTep_process(PyTep *self, PyObject *args,
 	return PyUnicode_FromString(seq.buffer);
 }
 
+static int kprobe_info_short(struct trace_seq *s,
+			     struct tep_record *record,
+			     struct tep_event *event,
+			     void *context)
+{
+	/* Do not print the address of the probe (first field). */
+	unsigned long long select_mask = ~0x1;
+
+	tep_record_print_selected_fields(s, record, event, select_mask);
+
+	return 0;
+}
+
+PyObject *PyTep_short_kprobe_print(PyTep *self, PyObject *args,
+						PyObject *kwargs)
+{
+	static char *kwlist[] = {"system", "event", "id", NULL};
+	const char *system, *event;
+	int ret, id = -1;
+
+	system = event = NO_ARG;
+
+	if(!PyArg_ParseTupleAndKeywords(args,
+					kwargs,
+					"ss|i",
+					kwlist,
+					&system,
+					&event,
+					&id)) {
+		return false;
+	}
+
+	ret = tep_register_event_handler(self->ptrObj, id, system, event,
+					 kprobe_info_short, NULL);
+
+	return PyLong_FromLong(ret);
+}
+
 static bool check_file(struct tracefs_instance *instance, const char *file)
 {
 	if (!tracefs_file_exists(instance, file)) {

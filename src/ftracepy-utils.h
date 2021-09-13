@@ -63,6 +63,9 @@ PyObject *PyTep_info(PyTep *self, PyObject *args,
 PyObject *PyTep_process(PyTep *self, PyObject *args,
 				     PyObject *kwargs);
 
+PyObject *PyTep_short_kprobe_print(PyTep *self, PyObject *args,
+						PyObject *kwargs);
+
 PyObject *PyTfsInstance_dir(PyTfsInstance *self);
 
 PyObject *PyKprobe_event(PyKprobe *self);

@@ -27,6 +27,7 @@ open_probe.add_ptr_arg(name='mode',
 open_probe.register()
 
 tep = tc.local_tep()
+tc.short_kprobe_print(tep, [open_probe])
 
 def callback(event, record):
     print(tep.info(event, record))
