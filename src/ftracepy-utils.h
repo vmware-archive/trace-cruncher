@@ -54,6 +54,15 @@ PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 PyObject *PyTep_get_event(PyTep *self, PyObject *args,
 				       PyObject *kwargs);
 
+PyObject *PyTep_event_record(PyTep *self, PyObject *args,
+					  PyObject *kwargs);
+
+PyObject *PyTep_info(PyTep *self, PyObject *args,
+				  PyObject *kwargs);
+
+PyObject *PyTep_process(PyTep *self, PyObject *args,
+				     PyObject *kwargs);
+
 PyObject *PyTfsInstance_dir(PyTfsInstance *self);
 
 PyObject *PyKprobe_event(PyKprobe *self);

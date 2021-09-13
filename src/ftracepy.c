@@ -68,6 +68,21 @@ static PyMethodDef PyTep_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Get a PyTepEvent object."
 	},
+	{"event_record",
+	 (PyCFunction) PyTep_event_record,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Generic print of a trace event."
+	},
+	{"process",
+	 (PyCFunction) PyTep_process,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Generic print of the process that generated the trace event."
+	},
+	{"info",
+	 (PyCFunction) PyTep_info,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Generic print of a trace event info."
+	},
 	{NULL}
 };
 

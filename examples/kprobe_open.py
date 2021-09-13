@@ -26,12 +26,10 @@ open_probe.add_ptr_arg(name='mode',
 
 open_probe.register()
 
+tep = tc.local_tep()
+
 def callback(event, record):
-    if event.id() == open_probe.id():
-        file_name = event.parse_record_field(record=record, field='file')
-        flags = event.parse_record_field(record, 'flags')
-        mode = event.parse_record_field(record, 'mode')
-        print('file: {0}  (flags: {1}; mode: {2})'.format(file_name, hex(flags), hex(mode)))
+    print(tep.info(event, record))
 
 
 if __name__ == "__main__":

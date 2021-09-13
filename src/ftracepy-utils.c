@@ -367,6 +367,172 @@ PyObject *PyTep_get_event(PyTep *self, PyObject *args,
 	return PyTepEvent_New(event);
 }
 
+static struct trace_seq seq;
+
+static bool init_print_seq(void)
+{
+	if (!seq.buffer)
+		trace_seq_init(&seq);
+
+	if (!seq.buffer) {
+		PyErr_SetString(TFS_ERROR, "Unable to initialize 'trace_seq'.");
+		return false;
+	}
+
+	trace_seq_reset(&seq);
+
+	return true;
+}
+
+static char *get_comm_from_pid(int pid)
+{
+	char *comm_file, *comm = NULL;
+	char buff[PATH_MAX];
+	int fd, r;
+
+	if (asprintf(&comm_file, "/proc/%i/comm", pid) <= 0) {
+		MEM_ERROR;
+		return NULL;
+	}
+
+	/*
+	 * This file is not guaranteed to exist. Return NULL if the process
+	 * is no longer active.
+	 */
+	fd = open(comm_file, O_RDONLY);
+	free(comm_file);
+	if (fd < 0)
+		return NULL;
+
+	r = read(fd, buff, PATH_MAX);
+	close(fd);
+	if (r <= 0)
+		return NULL;
+
+	comm = strdup(buff);
+	if (!comm)
+		MEM_ERROR;
+
+	return comm;
+}
+
+static void print_comm_pid(struct tep_handle *tep,
+			   struct trace_seq *seq,
+			   struct tep_record *record,
+			   struct tep_event *event)
+{
+	int pid = get_pid(event, record);
+	if (!tep_is_pid_registered(tep, pid)) {
+		char *comm = get_comm_from_pid(pid);
+		if (comm) {
+			tep_register_comm(tep, comm, pid);
+			free(comm);
+		}
+	}
+
+	tep_print_event(tep, seq, record, "%s-%i",
+			TEP_PRINT_COMM,
+			TEP_PRINT_PID);
+}
+
+static void print_name_info(struct tep_handle *tep,
+			    struct trace_seq *seq,
+			    struct tep_record *record,
+			    struct tep_event *event)
+{
+	trace_seq_printf(seq, " %s: ", event->name);
+	tep_print_event(tep, seq, record, "%s", TEP_PRINT_INFO);
+}
+
+static void print_event(struct tep_handle *tep,
+			struct trace_seq *seq,
+			struct tep_record *record,
+			struct tep_event *event)
+{
+	tep_print_event(tep, seq, record, "%6.1000d ", TEP_PRINT_TIME);
+	print_comm_pid(tep, seq, record, event);
+	tep_print_event(tep, seq, record, " cpu=%i ", TEP_PRINT_CPU);
+	print_name_info(tep, seq, record, event);
+}
+
+static bool print_init(PyObject *args, PyObject *kwargs,
+		       struct tep_event **event,
+		       struct tep_record **record)
+{
+	static char *kwlist[] = { "event", "record", NULL};
+	PyObject *obj_rec, *obj_evt;
+	PyTepRecord *py_record;
+	PyTepEvent *py_event;
+
+	if (!init_print_seq())
+		return false;
+
+	if(!PyArg_ParseTupleAndKeywords(args,
+					kwargs,
+					"OO",
+					kwlist,
+					&obj_evt,
+					&obj_rec)) {
+		return false;
+	}
+
+	if (PyTepEvent_Check(obj_evt) && PyTepRecord_Check(obj_rec)) {
+		py_event = (PyTepEvent *)obj_evt;
+		*event = py_event->ptrObj;
+		py_record = (PyTepRecord *)obj_rec;
+		*record = py_record->ptrObj;
+
+		return true;
+	}
+
+	PyErr_SetString(TRACECRUNCHER_ERROR,
+			"Inconsistent arguments.");
+
+	return false;
+}
+
+PyObject *PyTep_event_record(PyTep *self, PyObject *args,
+					  PyObject *kwargs)
+{
+	struct tep_record *record;
+	struct tep_event *event;
+
+	if (!print_init(args, kwargs, &event, &record))
+		return NULL;
+
+	print_event(self->ptrObj, &seq, record, event);
+
+	return PyUnicode_FromString(seq.buffer);
+}
+
+PyObject *PyTep_info(PyTep *self, PyObject *args,
+				  PyObject *kwargs)
+{
+	struct tep_record *record;
+	struct tep_event *event;
+
+	if (!print_init(args, kwargs, &event, &record))
+		return NULL;
+
+	print_name_info(self->ptrObj, &seq, record, event);
+
+	return PyUnicode_FromString(seq.buffer);
+}
+
+PyObject *PyTep_process(PyTep *self, PyObject *args,
+				     PyObject *kwargs)
+{
+	struct tep_record *record;
+	struct tep_event *event;
+
+	if (!print_init(args, kwargs, &event, &record))
+		return NULL;
+
+	print_comm_pid(self->ptrObj, &seq, record, event);
+
+	return PyUnicode_FromString(seq.buffer);
+}
+
 static bool check_file(struct tracefs_instance *instance, const char *file)
 {
 	if (!tracefs_file_exists(instance, file)) {
@@ -2221,4 +2387,6 @@ PyObject *PyFtrace_clear_error_log(PyObject *self, PyObject *args,
 
 void PyFtrace_at_exit(void)
 {
+	if (seq.buffer)
+		trace_seq_destroy(&seq);
 }
