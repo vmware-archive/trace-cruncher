@@ -384,10 +384,16 @@ static bool init_print_seq(void)
 	return true;
 }
 
+static inline void trim_new_line(char *val)
+{
+	if (val[strlen(val) - 1] == '\n')
+		val[strlen(val) - 1] = '\0';
+}
+
 static char *get_comm_from_pid(int pid)
 {
 	char *comm_file, *comm = NULL;
-	char buff[PATH_MAX];
+	char buff[PATH_MAX] = {0};
 	int fd, r;
 
 	if (asprintf(&comm_file, "/proc/%i/comm", pid) <= 0) {
@@ -409,6 +415,7 @@ static char *get_comm_from_pid(int pid)
 	if (r <= 0)
 		return NULL;
 
+	trim_new_line(buff);
 	comm = strdup(buff);
 	if (!comm)
 		MEM_ERROR;
@@ -652,11 +659,6 @@ static int read_from_file(struct tracefs_instance *instance,
 		TfsError_fmt(instance, "Can not read from file %s", file);
 
 	return size;
-}
-
-static inline void trim_new_line(char *val)
-{
-	val[strlen(val) - 1] = '\0';
 }
 
 static bool write_to_file_and_check(struct tracefs_instance *instance,
