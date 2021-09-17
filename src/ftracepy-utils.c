@@ -1316,7 +1316,7 @@ PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
 	static char *kwlist[] = {"system", "event", "filter", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "ssO|)",
+					 "sss|O",
 					 kwlist,
 					 &system,
 					 &event,
