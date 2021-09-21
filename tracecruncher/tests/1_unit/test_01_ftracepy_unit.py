@@ -480,5 +480,107 @@ class TracingOnTestCase(unittest.TestCase):
         self.assertTrue(err in str(context.exception))
 
 
+class HistTestCase(unittest.TestCase):
+    def test_hist_create(self):
+        inst = ft.create_instance(instance_name)
+        sys = 'kmem'
+        evt = 'kmalloc'
+        tgr_file = inst.dir() + '/events/' +  sys + '/' + evt + '/trigger'
+
+        f = open(tgr_file)
+
+        hist = ft.hist(system=sys, event=evt, key='call_site', type='sym')
+        hist.stop(inst)
+        h_buff = f.read()
+        self.assertTrue('hist:keys=call_site.sym' in h_buff)
+        hist.close(inst)
+
+        hist = ft.hist(system=sys, event=evt,
+                       axes={'call_site': 'sym',
+                             'bytes_alloc': 'n'})
+        hist.stop(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue('hist:keys=call_site.sym,bytes_alloc' in h_buff)
+        hist.close(inst)
+
+        hist = ft.hist(name='h2d', system=sys, event=evt,
+                       axes={'bytes_req': 'log',
+                             'bytes_alloc': 'h'})
+        hist.stop(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue('hist:name=h2d:keys=bytes_req.log2,bytes_alloc.hex' in h_buff)
+
+        hist.close(inst)
+        f.close()
+
+    def test_hist_setup(self):
+        inst = ft.create_instance(instance_name)
+        sys = 'kmem'
+        evt = 'kmalloc'
+        tgr_file = inst.dir() + '/events/' +  sys + '/' + evt + '/trigger'
+
+        f = open(tgr_file)
+
+        hist = ft.hist(system=sys, event=evt,
+                       axes={'call_site': 'sym',
+                             'bytes_alloc': 'n'})
+
+        hist.add_value(value='bytes_req')
+        hist.stop(inst)
+        h_buff = f.read()
+        self.assertTrue(':vals=hitcount,bytes_req' in h_buff)
+
+        hist.sort_keys(keys=['bytes_req', 'bytes_alloc'])
+        hist.stop(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue(':sort=bytes_req,bytes_alloc' in h_buff)
+
+        hist.sort_key_direction('bytes_req', 'desc')
+        hist.stop(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue(':sort=bytes_req.descending,bytes_alloc' in str(h_buff))
+
+        hist.close(inst)
+        f.close()
+
+    def test_hist_ctrl(self):
+        inst = ft.create_instance(instance_name)
+        sys = 'kmem'
+        evt = 'kmalloc'
+        tgr_file = inst.dir() + '/events/' +  sys + '/' + evt + '/trigger'
+
+        f = open(tgr_file)
+
+        hist = ft.hist(system=sys, event=evt,
+                       axes={'call_site': 'sym',
+                             'bytes_alloc': 'n'})
+
+        hist.start(inst)
+        h_buff = f.read()
+        self.assertTrue('[active]' in h_buff)
+
+        hist.stop(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue('[paused]' in h_buff)
+
+        hist.resume(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue('[active]' in h_buff)
+
+        h_buff = hist.read(inst)
+        self.assertTrue('Totals:' in h_buff)
+
+        hist.close(inst)
+        f.seek(0)
+        h_buff = f.read()
+        self.assertTrue('Available triggers:' in h_buff)
+        f.close()
+
 if __name__ == '__main__':
     unittest.main()
