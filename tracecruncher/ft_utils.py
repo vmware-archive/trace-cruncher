@@ -46,6 +46,8 @@ class event:
         self.instance_list = []
         if static:
             self.evt_id = find_event_id(system, name)
+            if self.evt_id < 0:
+                raise ValueError('Faild to find event {0}/{1}'.format(system, name))
         else:
             self.evt_id = -1
 
