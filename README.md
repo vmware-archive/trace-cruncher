@@ -13,7 +13,7 @@ The Trace-Cruncher allows for sophisticated analysis of kernel tracing data via 
 ### Prerequisites
 
 Trace-Cruncher has the following external dependencies:
-  libtraceevent, libtracefs, KernelShark, Json-C, Cython, NumPy.
+  libtraceevent, libtracefs, trace-cmd, KernelShark, Json-C, Cython, NumPy.
 
 1.1 In order to install all packages on Ubuntu do the following:
 
@@ -62,7 +62,18 @@ Trace-Cruncher has the following external dependencies:
     > cd ..
 
 
-    > git clone https://github.com/yordan-karadzhov/kernel-shark-v2.beta.git kernel-shark
+    > git clone https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/
+
+    > cd trace-cmd
+
+    > make
+
+    > sudo make install_libs
+
+    > cd ..
+
+
+    > git clone https://git.kernel.org/pub/scm/utils/trace-cmd/kernel-shark.git/
 
     > cd kernel-shark/build
 
