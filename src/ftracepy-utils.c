@@ -2031,14 +2031,15 @@ static PyObject *get_callback_func(const char *plugin_name, const char * py_call
 	py_name = PyUnicode_FromString(plugin_name);
 	py_module = PyImport_Import(py_name);
 	if (!py_module) {
-		TfsError_fmt(NULL, "Failed to import plugin \'%s\'",
+		PyErr_Format(TRACECRUNCHER_ERROR,
+			     "Failed to import plugin \'%s\'",
 			     plugin_name);
 		return NULL;
 	}
 
 	py_func = PyObject_GetAttrString(py_module, py_callback);
 	if (!py_func || !PyCallable_Check(py_func)) {
-		TfsError_fmt(NULL,
+		PyErr_Format(TRACECRUNCHER_ERROR,
 			     "Failed to import callback from \'%s\'",
 			     plugin_name);
 		return NULL;
@@ -2169,7 +2170,7 @@ PyObject *PyFtrace_trace_shell_process(PyObject *self, PyObject *args,
 
 	pid = fork();
 	if (pid < 0) {
-		TfsError_setstr(instance, "Failed to fork");
+		PyErr_SetString(TRACECRUNCHER_ERROR, "Failed to fork");
 		return NULL;
 	}
 
@@ -2215,7 +2216,8 @@ PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
 		return NULL;
 
 	if (!PyList_CheckExact(py_argv)) {
-		TfsError_setstr(instance, "Failed to parse \'argv\' list");
+		PyErr_SetString(TRACECRUNCHER_ERROR,
+				"Failed to parse \'argv\' list");
 		return NULL;
 	}
 
@@ -2223,7 +2225,7 @@ PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
 
 	pid = fork();
 	if (pid < 0) {
-		TfsError_setstr(instance, "Failed to fork");
+		PyErr_SetString(TRACECRUNCHER_ERROR, "Failed to fork");
 		return NULL;
 	}
 
