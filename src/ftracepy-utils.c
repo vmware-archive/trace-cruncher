@@ -1889,19 +1889,9 @@ PyObject *PyKprobe_clear_filter(PyKprobe *self, PyObject *args,
 						PyObject *kwargs)
 {
 	struct tracefs_instance *instance;
-	PyObject *py_inst = NULL;
 	char path[PATH_MAX];
 
-	static char *kwlist[] = {"instance", NULL};
-	if (!PyArg_ParseTupleAndKeywords(args,
-					 kwargs,
-					 "|O",
-					 kwlist,
-					 &py_inst)) {
-		return NULL;
-	}
-
-	if (!get_optional_instance(py_inst, &instance))
+	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
 
 	sprintf(path, "events/%s/%s/filter", TC_SYS, self->ptrObj->event);
@@ -1916,19 +1906,9 @@ PyObject *PyKprobe_clear_filter(PyKprobe *self, PyObject *args,
 static bool enable_kprobe(PyKprobe *self, PyObject *args, PyObject *kwargs,
 			  bool enable)
 {
-	static char *kwlist[] = {"instance", NULL};
 	struct tracefs_instance *instance;
-	PyObject *py_inst = NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args,
-					 kwargs,
-					 "|O",
-					 kwlist,
-					 &py_inst)) {
-		return false;
-	}
-
-	if (!get_optional_instance(py_inst, &instance))
+	if (!get_instance_from_arg(args, kwargs, &instance))
 		return false;
 
 	return event_enable_disable(instance, TC_SYS, self->ptrObj->event,
@@ -1956,19 +1936,9 @@ PyObject *PyKprobe_disable(PyKprobe *self, PyObject *args,
 PyObject *PyKprobe_is_enabled(PyKprobe *self, PyObject *args,
 					      PyObject *kwargs)
 {
-	static char *kwlist[] = {"instance", NULL};
 	struct tracefs_instance *instance;
-	PyObject *py_inst = NULL;
 
-	if (!PyArg_ParseTupleAndKeywords(args,
-					 kwargs,
-					 "|O",
-					 kwlist,
-					 &py_inst)) {
-		return NULL;
-	}
-
-	if (!get_optional_instance(py_inst, &instance))
+	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
 
 	return event_is_enabled(instance, TC_SYS, self->ptrObj->event);
