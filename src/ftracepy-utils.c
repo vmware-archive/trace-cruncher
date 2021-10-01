@@ -68,14 +68,14 @@ static void TfsError_fmt(struct tracefs_instance *instance,
 		vasprintf(&tc_err_log, fmt, args);
 		va_end(args);
 
-		PyErr_Format(TEP_ERROR, "%s\ntfs_error: %s",
+		PyErr_Format(TFS_ERROR, "%s\ntfs_error: %s",
 			     tc_err_log, tfs_err_log);
 
 		tfs_clear_error_log(instance);
 		free(tfs_err_log);
 		free(tc_err_log);
 	} else {
-		PyErr_FormatV(TEP_ERROR, fmt, args);
+		PyErr_FormatV(TFS_ERROR, fmt, args);
 		va_end(args);
 	}
 }
@@ -86,11 +86,11 @@ static void TfsError_setstr(struct tracefs_instance *instance,
 	char *tfs_err_log = tfs_error_log(instance, NULL);
 
 	if (tfs_err_log) {
-		PyErr_Format(TEP_ERROR, "%s\ntfs_error: %s", msg, tfs_err_log);
+		PyErr_Format(TFS_ERROR, "%s\ntfs_error: %s", msg, tfs_err_log);
 		tfs_clear_error_log(instance);
 		free(tfs_err_log);
 	} else {
-		PyErr_SetString(TEP_ERROR, msg);
+		PyErr_SetString(TFS_ERROR, msg);
 	}
 }
 
