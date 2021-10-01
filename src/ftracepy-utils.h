@@ -26,7 +26,7 @@ C_OBJECT_WRAPPER_DECLARE(tracefs_instance, PyTfsInstance)
 
 struct ftracepy_kprobe;
 
-void ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp);
+int ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp);
 
 void ftracepy_kprobe_free(struct ftracepy_kprobe *kp);
 

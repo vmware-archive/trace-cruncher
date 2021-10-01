@@ -1757,9 +1757,9 @@ PyObject *PyKprobe_probe(PyKprobe *self)
 	return PyUnicode_FromString(self->ptrObj->probe);
 }
 
-void ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp)
+int ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp)
 {
-	unregister_kprobe(kp->event);
+	return tracefs_kprobe_clear_probe(TC_SYS, kp-> event, true);
 }
 
 void ftracepy_kprobe_free(struct ftracepy_kprobe *kp)

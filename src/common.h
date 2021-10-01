@@ -54,8 +54,9 @@ static inline void no_free(void *ptr)
 
 #define NO_FREE		no_free
 
-static inline void no_destroy(void *ptr)
+static inline int no_destroy(void *ptr)
 {
+	return 0;
 }
 
 #define NO_DESTROY	no_destroy
@@ -101,7 +102,9 @@ static int py_type##_init(py_type *self, PyObject *args, PyObject *kwargs)	\
 static void py_type##_dealloc(py_type *self)					\
 {										\
 	if (self->destroy)							\
-		obj_destroy(self->ptrObj);					\
+		if (obj_destroy(self->ptrObj) < 0)				\
+			printf("fracepy_error: object '%s' failed to destroy\n",\
+			       STR(c_type));					\
 	ptr_free(self->ptrObj);							\
 	Py_TYPE(self)->tp_free(self);						\
 }										\
