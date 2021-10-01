@@ -63,7 +63,7 @@ static inline int no_destroy(void *ptr)
 
 #define STR(x) #x
 
-#define MAKE_TYPE_STR(x) STR(trace.x)
+#define MAKE_TYPE_STR(x) STR(ftracepy.x)
 
 #define MAKE_DIC_STR(x) STR(libtrace x object)
 
@@ -84,7 +84,7 @@ bool py_type##_Check(PyObject *obj);						\
 
 #define  C_OBJECT_WRAPPER(c_type, py_type, obj_destroy, ptr_free)		\
 static PyTypeObject py_type##Type = {						\
-	PyVarObject_HEAD_INIT(NULL, 0) MAKE_TYPE_STR(c_type)			\
+	PyVarObject_HEAD_INIT(NULL, 0) MAKE_TYPE_STR(py_type)			\
 };										\
 PyObject *py_type##_New(struct c_type *c_ptr)					\
 {										\
