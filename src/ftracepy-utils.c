@@ -2039,7 +2039,7 @@ static PyObject *get_callback_func(const char *plugin_name, const char * py_call
 	py_func = PyObject_GetAttrString(py_module, py_callback);
 	if (!py_func || !PyCallable_Check(py_func)) {
 		TfsError_fmt(NULL,
-			     "Failed to import callback from plugin \'%s\'",
+			     "Failed to import callback from \'%s\'",
 			     plugin_name);
 		return NULL;
 	}
