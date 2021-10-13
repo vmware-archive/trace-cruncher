@@ -1161,90 +1161,59 @@ PyObject *PyFtrace_disable_event(PyObject *self, PyObject *args,
 static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 			      bool enable)
 {
-	static char *kwlist[] = {"instance", "systems", "events", NULL};
-	PyObject *system_list = NULL, *event_list = NULL, *system_event_list;
-	const char **systems = NULL, **events = NULL;
+	static char *kwlist[] = {"events", "instance", NULL};
+	PyObject *event_dict = NULL, *py_inst = NULL;
 	struct tracefs_instance *instance;
-	PyObject *py_inst = NULL;
-	char *file = NULL;
-	int ret, s, e;
+	PyObject *py_system, *py_events;
+	const char *system, *event;
+	Py_ssize_t pos = 0;
+	int i, n;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "|OOO",
+					 "O|O",
 					 kwlist,
-					 &py_inst,
-					 &system_list,
-					 &event_list)) {
+					 &event_dict,
+					 &py_inst)) {
 		return false;
 	}
 
 	if (!get_optional_instance(py_inst, &instance))
 		return false;
 
-	if (!system_list && !event_list)
-		return event_enable_disable(instance, NULL, NULL, enable);
-
-	if (!system_list && event_list) {
-		if (PyUnicode_Check(event_list) &&
-		    is_all(PyUnicode_DATA(event_list))) {
-			return event_enable_disable(instance, NULL, NULL, enable);
-		} else {
-			TfsError_setstr(instance,
-					"Failed to enable events for unspecified system");
-			return false;
-		}
-	}
-
-	systems = get_arg_list(system_list);
-	if (!systems) {
-		TfsError_setstr(instance, "Inconsistent \"systems\" argument.");
-		return false;
-	}
-
-	if (!event_list) {
-		for (s = 0; systems[s]; ++s) {
-			ret = event_enable_disable(instance, systems[s], NULL, enable);
-			if (ret < 0)
-				return false;
-		}
-
-		return true;
-	}
-
-	if (!PyList_CheckExact(event_list))
+	if (!PyDict_CheckExact(event_dict))
 		goto fail_with_err;
 
-	for (s = 0; systems[s]; ++s) {
-		system_event_list = PyList_GetItem(event_list, s);
-		if (!system_event_list || !PyList_CheckExact(system_event_list))
+	while (PyDict_Next(event_dict, &pos, &py_system, &py_events)) {
+		if (!PyUnicode_Check(py_system) ||
+		    !PyList_CheckExact(py_events))
 			goto fail_with_err;
 
-		events = get_arg_list(system_event_list);
-		if (!events)
-			goto fail_with_err;
+		system = PyUnicode_DATA(py_system);
+		n = PyList_Size(py_events);
 
-		for (e = 0; events[e]; ++e) {
-			if (!event_enable_disable(instance, systems[s], events[e], enable))
-				goto fail;
+		if (n == 0 || (n == 1 && is_all(str_from_list(py_events, 0)))) {
+			if (!event_enable_disable(instance, system, NULL,
+						  enable))
+				return false;
+			continue;
 		}
 
-		free(events);
-		events = NULL;
-	}
+		for (i = 0; i < n; ++i) {
+			event = str_from_list(py_events, i);
+			if (!event)
+				goto fail_with_err;
 
-	free(systems);
+			if (!event_enable_disable(instance, system, event,
+						  enable))
+				return false;
+		}
+	}
 
 	return true;
 
  fail_with_err:
 	TfsError_setstr(instance, "Inconsistent \"events\" argument.");
-
- fail:
-	free(systems);
-	free(events);
-	free(file);
-
 	return false;
 }
 

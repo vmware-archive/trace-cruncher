@@ -13,8 +13,8 @@ inst = ft.create_instance()
 
 # Enable all static events from systems "sched" and "irq".
 ft.enable_events(instance=inst,
-                 systems=['sched', 'irq'],
-                 events=[['sched_switch'],['all']])
+                 events={'sched': ['sched_switch', 'sched_waking'],
+                         'irq':   ['all']})
 
 # Print the stream of trace events. "Ctrl+c" to stop tracing.
 ft.read_trace(instance=inst)

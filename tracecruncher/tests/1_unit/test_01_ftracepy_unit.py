@@ -270,20 +270,8 @@ class EventsTestCase(unittest.TestCase):
     def test_enable_events(self):
         inst = ft.create_instance(instance_name)
         ft.enable_events(instance=inst,
-                         events='all')
-
-        ret = ft.event_is_enabled(instance=inst,
-                                  event='all')
-        self.assertEqual(ret, '1')
-        ft.disable_events(instance=inst,
-                          events='all')
-
-        ret = ft.event_is_enabled(instance=inst,
-                                  event='all')
-        self.assertEqual(ret, '0')
-
-        ft.enable_events(instance=inst,
-                         systems=['sched', 'irq'])
+                         events={'sched': ['all'],
+                                 'irq': ['all']})
 
         ret = ft.event_is_enabled(instance=inst,
                                   system='sched',
@@ -296,7 +284,8 @@ class EventsTestCase(unittest.TestCase):
         self.assertEqual(ret, '1')
 
         ft.disable_events(instance=inst,
-                          systems=['sched', 'irq'])
+                          events={'sched': ['all'],
+                                  'irq': ['all']})
 
         ret = ft.event_is_enabled(instance=inst,
                                   system='sched',
@@ -309,9 +298,8 @@ class EventsTestCase(unittest.TestCase):
         self.assertEqual(ret, '0')
 
         ft.enable_events(instance=inst,
-                         systems=['sched', 'irq'],
-                         events=[['sched_switch', 'sched_waking'],
-                                 ['all']])
+                         events={'sched': ['sched_switch', 'sched_waking'],
+                                 'irq':   ['all']})
 
         ret = ft.event_is_enabled(instance=inst,
                                   system='sched',
@@ -334,9 +322,8 @@ class EventsTestCase(unittest.TestCase):
         self.assertEqual(ret, '1')
 
         ft.disable_events(instance=inst,
-                          systems=['sched', 'irq'],
-                          events=[['sched_switch', 'sched_waking'],
-                                  ['all']])
+                          events={'sched': ['sched_switch', 'sched_waking'],
+                                  'irq':   ['all']})
 
         ret = ft.event_is_enabled(instance=inst,
                                   system='sched',
@@ -359,21 +346,13 @@ class EventsTestCase(unittest.TestCase):
         err = 'Inconsistent \"events\" argument'
         with self.assertRaises(Exception) as context:
             ft.enable_events(instance=inst,
-                             systems=['sched'],
-                             events=['all'])
-        self.assertTrue(err in str(context.exception))
-
-        err = 'Failed to enable events for unspecified system'
-        with self.assertRaises(Exception) as context:
-            ft.enable_events(instance=inst,
-                             events=['sched_switch', 'sched_wakeup'])
+                             events='all')
         self.assertTrue(err in str(context.exception))
 
         err = 'Failed to enable/disable event'
         with self.assertRaises(Exception) as context:
             ft.enable_events(instance=inst,
-                             systems=['sched'],
-                             events=[['no_event']])
+                             events={'sched': ['no_event']})
         self.assertTrue(err in str(context.exception))
 
 
