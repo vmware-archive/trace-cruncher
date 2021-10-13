@@ -274,10 +274,19 @@ PyObject *PyTepEvent_get_pid(PyTepEvent* self, PyObject *args,
 	return PyLong_FromLong(pid);
 }
 
+static const char *str_from_list(PyObject *py_list, int i)
+{
+	PyObject *item = PyList_GetItem(py_list, i);
+
+	if (!PyUnicode_Check(item))
+		return NULL;
+
+	return PyUnicode_DATA(item);
+}
+
 static const char **get_arg_list(PyObject *py_list)
 {
 	const char **argv = NULL;
-	PyObject *arg_py;
 	int i, n;
 
 	if (!PyList_CheckExact(py_list))
@@ -286,18 +295,14 @@ static const char **get_arg_list(PyObject *py_list)
 	n = PyList_Size(py_list);
 	argv = calloc(n + 1, sizeof(*argv));
 	for (i = 0; i < n; ++i) {
-		arg_py = PyList_GetItem(py_list, i);
-		if (!PyUnicode_Check(arg_py))
+		argv[i] = str_from_list(py_list, i);
+		if (!argv[i])
 			goto fail;
-
-		argv[i] = PyUnicode_DATA(arg_py);
 	}
 
 	return argv;
 
  fail:
-	PyErr_SetString(TRACECRUNCHER_ERROR,
-			"Failed to parse argument list.");
 	free(argv);
 	return NULL;
 }
