@@ -2097,10 +2097,17 @@ static void iterate_raw_events_waitpid(struct tracefs_instance *instance,
 				       PyObject *py_func,
 				       pid_t pid)
 {
+	bool *callback_status = &callback_ctx.status;
+	int ret;
+
 	callback_ctx.py_callback = py_func;
+	(*(volatile bool *)callback_status) = true;
 	do {
-		tracefs_iterate_raw_events(tep, instance, NULL, 0,
-					   callback, &callback_ctx);
+		ret = tracefs_iterate_raw_events(tep, instance, NULL, 0,
+						 callback, &callback_ctx);
+
+		if (*(volatile bool *)callback_status == false || ret < 0)
+			break;
 	} while (waitpid(pid, NULL, WNOHANG) != pid);
 }
 
