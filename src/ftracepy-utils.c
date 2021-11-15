@@ -2046,21 +2046,36 @@ static int callback(struct tep_event *event, struct tep_record *record,
 	ret = PyObject_CallObject((PyObject *)ctx->py_callback, arglist);
 	Py_DECREF(arglist);
 
-	if (ret) {
-		Py_DECREF(ret);
-	} else {
+	if (!ret) {
 		if (PyErr_Occurred()) {
-			if (PyErr_ExceptionMatches(PyExc_SystemExit)) {
-				PyErr_Clear();
+			PyObject *err_type, *err_value, *err_traceback;
+
+			PyErr_Fetch(&err_type, &err_value, &err_traceback);
+			if (err_type == PyExc_SystemExit) {
+				if (PyLong_CheckExact(err_value))
+					Py_Exit(PyLong_AsLong(err_value));
+				else
+					Py_Exit(0);
 			} else {
+				PyErr_Restore(err_type, err_value, err_traceback);
 				PyErr_Print();
 			}
 		}
 
-		ctx->status = false;
+		goto stop;
 	}
 
+	if (PyLong_CheckExact(ret) && PyLong_AsLong(ret) != 0) {
+		Py_DECREF(ret);
+		goto stop;
+	}
+
+	Py_DECREF(ret);
 	return 0;
+
+ stop:
+	ctx->status = false;
+	return 1;
 }
 
 static bool notrace_this_pid(struct tracefs_instance *instance)
