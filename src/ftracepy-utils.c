@@ -1668,117 +1668,55 @@ PyObject *PyFtrace_tc_event_system(PyObject *self)
 	return PyUnicode_FromString(TC_SYS);
 }
 
-struct ftracepy_kprobe {
-	char *event;
-	char *function;
-	char *probe;
-};
-
-static bool register_kprobe(const char *event,
-			    const char *function,
-			    const char *probe)
+static PyObject *dynevent_info2py(char *buff, int type)
 {
-	if (tracefs_kprobe_raw(TC_SYS, event, function, probe) < 0) {
-		TfsError_fmt(NULL, "Failed to register kprobe \'%s\'.",
-			     event);
-		return false;
-	}
+	PyObject *ret;
 
-	return true;
-}
-
-static bool register_kretprobe(const char *event,
-			       const char *function,
-			       const char *probe)
-{
-	if (tracefs_kretprobe_raw(TC_SYS, event, function, probe) < 0) {
-		TfsError_fmt(NULL, "Failed to register kretprobe \'%s\'.",
-			     event);
-		return false;
-	}
-
-	return true;
-}
-
-static bool unregister_kprobe(const char *event)
-{
-	if (tracefs_kprobe_clear_probe(TC_SYS, event, true) < 0) {
-		TfsError_fmt(NULL, "Failed to unregister kprobe \'%s\'.",
-			     event);
-		return false;
-	}
-
-	return true;
-}
-
-PyObject *PyKprobe_event(PyKprobe *self)
-{
-	return PyUnicode_FromString(self->ptrObj->event);
-}
-
-PyObject *PyKprobe_system(PyKprobe *self)
-{
-	return PyUnicode_FromString(TC_SYS);
-}
-
-PyObject *PyKprobe_function(PyKprobe *self)
-{
-	return PyUnicode_FromString(self->ptrObj->function);
-}
-
-PyObject *PyKprobe_probe(PyKprobe *self)
-{
-	return PyUnicode_FromString(self->ptrObj->probe);
-}
-
-int ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp)
-{
-	return tracefs_kprobe_clear_probe(TC_SYS, kp-> event, true);
-}
-
-void ftracepy_kprobe_free(struct ftracepy_kprobe *kp)
-{
-	free(kp->event);
-	free(kp->function);
-	free(kp->probe);
-	free(kp);
-}
-
-static struct ftracepy_kprobe *
-kprobe_new(const char *event, const char *function, const char *probe,
-	   bool retprobe)
-{
-	struct ftracepy_kprobe *new_kprobe;
-
-	if (retprobe) {
-		if (!register_kretprobe(event, function, probe))
-			return NULL;
-	} else {
-		if (!register_kprobe(event, function, probe))
-			return NULL;
-	}
-
-	new_kprobe = calloc(1, sizeof(*new_kprobe));
-	if (!new_kprobe) {
-		MEM_ERROR;
-		unregister_kprobe(event);
-
+	if (type == TRACEFS_DYNEVENT_UNKNOWN) {
+		PyErr_SetString(TFS_ERROR, "Failed to get dynevent info.");
 		return NULL;
 	}
 
-	new_kprobe->event = strdup(event);
-	new_kprobe->function = strdup(function);
-	new_kprobe->probe = strdup(probe);
-	if (!new_kprobe->event ||
-	    !new_kprobe->function ||
-	    !new_kprobe->probe) {
-		MEM_ERROR;
-		ftracepy_kprobe_free(new_kprobe);
+	ret = PyUnicode_FromString(buff);
+	free(buff);
 
-		return NULL;
-	}
+	return ret;
+}
 
-	return new_kprobe;
+PyObject *PyDynevent_system(PyDynevent *self)
+{
+	char *buff;
+	int type;
+
+	type = tracefs_dynevent_info(self->ptrObj, &buff, NULL, NULL, NULL, NULL);
+	return dynevent_info2py(buff, type);
+}
+
+PyObject *PyDynevent_event(PyDynevent *self)
+{
+	char *buff;
+	int type;
+
+	type = tracefs_dynevent_info(self->ptrObj, NULL, &buff, NULL, NULL, NULL);
+	return dynevent_info2py(buff, type);
+}
+
+PyObject *PyDynevent_address(PyDynevent *self)
+{
+	char *buff;
+	int type;
+
+	type = tracefs_dynevent_info(self->ptrObj, NULL, NULL, NULL, &buff, NULL);
+	return dynevent_info2py(buff, type);
+}
+
+PyObject *PyDynevent_probe(PyDynevent *self)
+{
+	char *buff;
+	int type;
+
+	type = tracefs_dynevent_info(self->ptrObj, NULL, NULL, NULL, NULL, &buff);
+	return dynevent_info2py(buff, type);
 }
 
 PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
@@ -1786,7 +1724,7 @@ PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
 {
 	static char *kwlist[] = {"event", "function", "probe", NULL};
 	const char *event, *function, *probe;
-	struct ftracepy_kprobe *kprobe;
+	struct tracefs_dynevent *kprobe;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
@@ -1798,11 +1736,19 @@ PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
 		return NULL;
 	}
 
-	kprobe = kprobe_new(event, function, probe, false);
-	if (!kprobe)
+	kprobe = tracefs_kprobe_alloc(TC_SYS, event, function, probe);
+	if (!kprobe) {
+		MEM_ERROR;
 		return NULL;
+	}
 
-	return PyKprobe_New(kprobe);
+	if (tracefs_dynevent_create(kprobe) < 0) {
+		TfsError_fmt(NULL, "Failed to create kprobe '%s'", event);
+		tracefs_dynevent_free(kprobe);
+		return NULL;
+	}
+
+	return PyDynevent_New(kprobe);
 }
 
 PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
@@ -1810,7 +1756,7 @@ PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
 {
 	static char *kwlist[] = {"event", "function", "probe", NULL};
 	const char *event, *function, *probe = "$retval";
-	struct ftracepy_kprobe *kprobe;
+	struct tracefs_dynevent *kprobe;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
@@ -1822,20 +1768,29 @@ PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
 		return NULL;
 	}
 
-	kprobe = kprobe_new(event, function, probe, true);
-	if (!kprobe)
+	kprobe = tracefs_kretprobe_alloc(TC_SYS, event, function, probe, 0);
+	if (!kprobe) {
+		MEM_ERROR;
 		return NULL;
+	}
 
-	return PyKprobe_New(kprobe);
+	if (tracefs_dynevent_create(kprobe) < 0) {
+		TfsError_fmt(NULL, "Failed to create kretprobe '%s'", event);
+		tracefs_dynevent_free(kprobe);
+		return NULL;
+	}
+
+	return PyDynevent_New(kprobe);
 }
 
-PyObject *PyKprobe_set_filter(PyKprobe *self, PyObject *args,
-					      PyObject *kwargs)
+PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
+						  PyObject *kwargs)
 {
 	struct tracefs_instance *instance;
 	PyObject *py_inst = NULL;
+	struct tep_handle * tep;
+	struct tep_event *event;
 	const char *filter;
-	char path[PATH_MAX];
 
 	static char *kwlist[] = {"filter", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
@@ -1850,72 +1805,153 @@ PyObject *PyKprobe_set_filter(PyKprobe *self, PyObject *args,
 	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
-	sprintf(path, "events/%s/%s/filter", TC_SYS, self->ptrObj->event);
-	if (!write_to_file_and_check(instance, path, filter)) {
-		TfsError_setstr(instance, "Failed to set kprobe filter.");
+	tep = tracefs_local_events(NULL);
+	if (!tep) {
+		TfsError_setstr(NULL, "Failed to get local events.");
+		return NULL;
+	}
+
+	event = tracefs_dynevent_get_event(tep, self->ptrObj);
+	if (!event) {
+		TfsError_setstr(NULL, "Failed to get event.");
+		return NULL;
+	}
+
+	if (tracefs_event_filter_apply(instance, event, filter) < 0) {
+		TfsError_fmt(NULL, "Failed to apply filter '%s' to event '%s'.",
+			     filter, event->name);
 		return NULL;
 	}
 
 	Py_RETURN_NONE;
 }
 
-PyObject *PyKprobe_clear_filter(PyKprobe *self, PyObject *args,
-						PyObject *kwargs)
+PyObject *PyDynevent_get_filter(PyDynevent *self, PyObject *args,
+						  PyObject *kwargs)
 {
+	char *evt_name, *evt_system, *filter = NULL;
 	struct tracefs_instance *instance;
+	PyObject *ret = NULL;
 	char path[PATH_MAX];
+	int type;
 
 	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
 
-	sprintf(path, "events/%s/%s/filter", TC_SYS, self->ptrObj->event);
-	if (!write_to_file(instance, path, OFF)) {
-		TfsError_setstr(instance, "Failed to clear kprobe filter.");
+	type = tracefs_dynevent_info(self->ptrObj, &evt_system, &evt_name,
+				     NULL, NULL, NULL);
+	if (type == TRACEFS_DYNEVENT_UNKNOWN) {
+		PyErr_SetString(TFS_ERROR, "Failed to get dynevent info.");
+		return NULL;
+	}
+
+	sprintf(path, "events/%s/%s/filter", evt_system, evt_name);
+	if (read_from_file(instance, path, &filter) <= 0)
+		goto free;
+
+	trim_new_line(filter);
+	ret = PyUnicode_FromString(filter);
+ free:
+	free(evt_system);
+	free(evt_name);
+	free(filter);
+
+	return ret;
+}
+
+PyObject *PyDynevent_clear_filter(PyDynevent *self, PyObject *args,
+						    PyObject *kwargs)
+{
+	struct tracefs_instance *instance;
+	struct tep_handle * tep;
+	struct tep_event *event;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	tep = tracefs_local_events(NULL);
+	if (!tep) {
+		TfsError_setstr(NULL, "Failed to get local events.");
+		return NULL;
+	}
+
+	event = tracefs_dynevent_get_event(tep, self->ptrObj);
+	if (!event) {
+		TfsError_setstr(NULL, "Failed to get event.");
+		return NULL;
+	}
+
+	if (tracefs_event_filter_clear(instance, event) < 0) {
+		TfsError_fmt(NULL, "Failed to clear filter for event '%s'.",
+			     event->name);
 		return NULL;
 	}
 
 	Py_RETURN_NONE;
 }
 
-static bool enable_kprobe(PyKprobe *self, PyObject *args, PyObject *kwargs,
+static bool enable_dynevent(PyDynevent *self, PyObject *args, PyObject *kwargs,
 			  bool enable)
 {
 	struct tracefs_instance *instance;
+	char * evt_name;
+	int type;
+	bool ret;
 
 	if (!get_instance_from_arg(args, kwargs, &instance))
 		return false;
 
-	return event_enable_disable(instance, TC_SYS, self->ptrObj->event,
-				    enable);
+	type = tracefs_dynevent_info(self->ptrObj, NULL, &evt_name, NULL, NULL, NULL);
+	if (type == TRACEFS_DYNEVENT_UNKNOWN) {
+		PyErr_SetString(TFS_ERROR, "Failed to get dynevent info.");
+		return NULL;
+	}
+
+	ret = event_enable_disable(instance, TC_SYS, evt_name, enable);
+	free(evt_name);
+
+	return ret;
 }
 
-PyObject *PyKprobe_enable(PyKprobe *self, PyObject *args,
-					  PyObject *kwargs)
+PyObject *PyDynevent_enable(PyDynevent *self, PyObject *args,
+					      PyObject *kwargs)
 {
-	if (!enable_kprobe(self, args, kwargs, true))
+	if (!enable_dynevent(self, args, kwargs, true))
 		return NULL;
 
 	Py_RETURN_NONE;
 }
 
-PyObject *PyKprobe_disable(PyKprobe *self, PyObject *args,
-					   PyObject *kwargs)
+PyObject *PyDynevent_disable(PyDynevent *self, PyObject *args,
+					       PyObject *kwargs)
 {
-	if (!enable_kprobe(self, args, kwargs, false))
+	if (!enable_dynevent(self, args, kwargs, false))
 		return NULL;
 
 	Py_RETURN_NONE;
 }
 
-PyObject *PyKprobe_is_enabled(PyKprobe *self, PyObject *args,
+PyObject *PyDynevent_is_enabled(PyDynevent *self, PyObject *args,
 					      PyObject *kwargs)
 {
 	struct tracefs_instance *instance;
+	char * evt_name;
+	PyObject *ret;
+	int type;
 
 	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
 
-	return event_is_enabled(instance, TC_SYS, self->ptrObj->event);
+	type = tracefs_dynevent_info(self->ptrObj, NULL, &evt_name, NULL, NULL, NULL);
+	if (type == TRACEFS_DYNEVENT_UNKNOWN) {
+		PyErr_SetString(TFS_ERROR, "Failed to get dynevent info.");
+		return NULL;
+	}
+
+	ret = event_is_enabled(instance, TC_SYS, evt_name);
+	free(evt_name);
+
+	return ret;
 }
 
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,

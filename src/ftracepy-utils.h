@@ -24,13 +24,9 @@ C_OBJECT_WRAPPER_DECLARE(tep_handle, PyTep)
 
 C_OBJECT_WRAPPER_DECLARE(tracefs_instance, PyTfsInstance)
 
-struct ftracepy_kprobe;
+struct tracefs_dynevent;
 
-int ftracepy_kprobe_destroy(struct ftracepy_kprobe *kp);
-
-void ftracepy_kprobe_free(struct ftracepy_kprobe *kp);
-
-C_OBJECT_WRAPPER_DECLARE(ftracepy_kprobe, PyKprobe);
+C_OBJECT_WRAPPER_DECLARE(tracefs_dynevent, PyDynevent);
 
 PyObject *PyTepRecord_time(PyTepRecord* self);
 
@@ -68,27 +64,30 @@ PyObject *PyTep_short_kprobe_print(PyTep *self, PyObject *args,
 
 PyObject *PyTfsInstance_dir(PyTfsInstance *self);
 
-PyObject *PyKprobe_event(PyKprobe *self);
+PyObject *PyDynevent_event(PyDynevent *self);
 
-PyObject *PyKprobe_system(PyKprobe *self);
+PyObject *PyDynevent_system(PyDynevent *self);
 
-PyObject *PyKprobe_function(PyKprobe *self);
+PyObject *PyDynevent_address(PyDynevent *self);
 
-PyObject *PyKprobe_probe(PyKprobe *self);
+PyObject *PyDynevent_probe(PyDynevent *self);
 
-PyObject *PyKprobe_set_filter(PyKprobe *self, PyObject *args,
+PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
 					      PyObject *kwargs);
 
-PyObject *PyKprobe_clear_filter(PyKprobe *self, PyObject *args,
+PyObject *PyDynevent_get_filter(PyDynevent *self, PyObject *args,
+						  PyObject *kwargs);
+
+PyObject *PyDynevent_clear_filter(PyDynevent *self, PyObject *args,
 						PyObject *kwargs);
 
-PyObject *PyKprobe_enable(PyKprobe *self, PyObject *args,
+PyObject *PyDynevent_enable(PyDynevent *self, PyObject *args,
 					  PyObject *kwargs);
 
-PyObject *PyKprobe_disable(PyKprobe *self, PyObject *args,
+PyObject *PyDynevent_disable(PyDynevent *self, PyObject *args,
 					   PyObject *kwargs);
 
-PyObject *PyKprobe_is_enabled(PyKprobe *self, PyObject *args,
+PyObject *PyDynevent_is_enabled(PyDynevent *self, PyObject *args,
 					      PyObject *kwargs);
 
 PyObject *PyFtrace_dir(PyObject *self);

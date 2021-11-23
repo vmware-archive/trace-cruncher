@@ -414,15 +414,31 @@ class KprobeTestCase(unittest.TestCase):
         kp1 = ft.register_kprobe(event=evt1, function=evt1_func,
                                  probe=evt1_prove)
         self.assertEqual(evt1, kp1.event())
-        self.assertEqual(evt1_func, kp1.function())
+        self.assertEqual(evt1_func, kp1.address())
         self.assertEqual(evt1_prove, kp1.probe())
 
         kp2 = ft.register_kprobe(event=evt2, function=evt2_func,
                                  probe=evt2_prove)
         self.assertEqual(evt2, kp2.event())
-        self.assertEqual(evt2_func, kp2.function())
+        self.assertEqual(evt2_func, kp2.address())
         self.assertEqual(evt2_prove, kp2.probe())
 
+    def test_filter_kprobe(self):
+        evt1 = 'mkdir'
+        evt1_func = 'do_mkdirat'
+        evt1_prove = 'path=+u0($arg2):ustring'
+        flt = 'path~\'/sys/fs/cgroup/*\''
+
+        kp1 = ft.register_kprobe(event=evt1, function=evt1_func,
+                                 probe=evt1_prove)
+        inst = ft.create_instance(instance_name)
+
+        kp1.set_filter(instance=inst, filter=flt)
+        flt_get =  kp1.get_filter(instance=inst)
+        self.assertEqual(flt, flt_get)
+        kp1.clear_filter(instance=inst)
+        flt_get =  kp1.get_filter(instance=inst)
+        self.assertEqual(flt_get, 'none')
 
     def test_enable_kprobe(self):
         evt1 = 'mkdir'

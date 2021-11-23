@@ -106,58 +106,67 @@ C_OBJECT_WRAPPER(tracefs_instance, PyTfsInstance,
 		 tracefs_instance_destroy,
 		 tracefs_instance_free)
 
-static PyMethodDef PyKprobe_methods[] = {
+static PyMethodDef PyDynevent_methods[] = {
 	{"event",
-	 (PyCFunction) PyKprobe_event,
+	 (PyCFunction) PyDynevent_event,
 	 METH_NOARGS,
-	 "Get the name of the kprobe event."
+	 "Get the name of the dynamic event."
 	},
 	{"system",
-	 (PyCFunction) PyKprobe_system,
+	 (PyCFunction) PyDynevent_system,
 	 METH_NOARGS,
-	 "Get the system name of the kprobe event."
+	 "Get the system name of the dynamic event."
 	},
-	{"function",
-	 (PyCFunction) PyKprobe_function,
+	{"address",
+	 (PyCFunction) PyDynevent_address,
 	 METH_NOARGS,
-	 "Get the function name of the kprobe event."
+	 "Get the address / function name of the dynamic event."
 	},
 	{"probe",
-	 (PyCFunction) PyKprobe_probe,
+	 (PyCFunction) PyDynevent_probe,
 	 METH_NOARGS,
-	 "Get the kprobe event definition."
+	 "Get the event definition."
 	},
 	{"set_filter",
-	 (PyCFunction) PyKprobe_set_filter,
+	 (PyCFunction) PyDynevent_set_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a filter for a kprobe."
+	 "Define a filter for a dynamic event."
+	},
+	{"get_filter",
+	 (PyCFunction) PyDynevent_get_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Get the filter of a dynamic event."
 	},
 	{"clear_filter",
-	 (PyCFunction) PyKprobe_clear_filter,
+	 (PyCFunction) PyDynevent_clear_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Clear the filter of a kprobe."
+	 "Clear the filter of a dynamic event."
 	},
 	{"enable",
-	 (PyCFunction) PyKprobe_enable,
+	 (PyCFunction) PyDynevent_enable,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable kprobe event."
+	 "Enable dynamic event."
 	},
 	{"disable",
-	 (PyCFunction) PyKprobe_disable,
+	 (PyCFunction) PyDynevent_disable,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable kprobe event."
+	 "Disable dynamic event."
 	},
 	{"is_enabled",
-	 (PyCFunction) PyKprobe_is_enabled,
+	 (PyCFunction) PyDynevent_is_enabled,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if kprobe event is enabled."
+	 "Check if dynamic event is enabled."
 	},
 	{NULL, NULL, 0, NULL}
 };
 
-C_OBJECT_WRAPPER(ftracepy_kprobe, PyKprobe,
-		 ftracepy_kprobe_destroy,
-		 ftracepy_kprobe_free)
+static int dynevent_destroy(struct tracefs_dynevent *devt)
+{
+	return tracefs_dynevent_destroy(devt, true);
+}
+C_OBJECT_WRAPPER(tracefs_dynevent, PyDynevent,
+		 dynevent_destroy,
+		 tracefs_dynevent_free)
 
 static PyMethodDef ftracepy_methods[] = {
 	{"dir",
@@ -375,7 +384,7 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	if (!PyTfsInstanceTypeInit())
 		return NULL;
 
-	if (!PyKprobeTypeInit())
+	if (!PyDyneventTypeInit())
 		return NULL;
 
 	TFS_ERROR = PyErr_NewException("tracecruncher.ftracepy.tfs_error",
@@ -393,7 +402,8 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	PyModule_AddObject(module, "tep_event", (PyObject *) &PyTepEventType);
 	PyModule_AddObject(module, "tep_record", (PyObject *) &PyTepRecordType);
 	PyModule_AddObject(module, "tracefs_instance", (PyObject *) &PyTfsInstanceType);
-	PyModule_AddObject(module, "ftracepy_kprobe", (PyObject *) &PyKprobeType);
+	PyModule_AddObject(module, "tracefs_dynevent", (PyObject *) &PyDyneventType);
+
 
 	PyModule_AddObject(module, "tfs_error", TFS_ERROR);
 	PyModule_AddObject(module, "tep_error", TEP_ERROR);

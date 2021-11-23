@@ -45,7 +45,8 @@ class InstanceTestCase(unittest.TestCase):
         instance_name = 'test_instance'
         inst = ft.create_instance(instance_name)
         systems = ft.available_event_systems(instance=inst)
-        systems.remove('ftrace')
+        if 'ftrace' in systems:
+            systems.remove('ftrace')
         for s in systems:
             ret = ft.event_is_enabled(instance=inst,
                                        system=s)
