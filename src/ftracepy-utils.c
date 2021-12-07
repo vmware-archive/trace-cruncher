@@ -1954,6 +1954,201 @@ PyObject *PyDynevent_is_enabled(PyDynevent *self, PyObject *args,
 	return ret;
 }
 
+static enum tracefs_hist_key_type hist_key_type(PyObject * py_type)
+{
+	int type = -1;
+
+	if (PyUnicode_Check(py_type)) {
+		const char *type_str = PyUnicode_DATA(py_type);
+
+		if (lax_cmp(type_str, "normal") ||
+		    lax_cmp(type_str, "n") )
+			type = TRACEFS_HIST_KEY_NORMAL;
+		else if (lax_cmp(type_str, "hex") ||
+			 lax_cmp(type_str, "h") )
+			type = TRACEFS_HIST_KEY_HEX;
+		else if (lax_cmp(type_str, "sym"))
+			 type = TRACEFS_HIST_KEY_SYM;
+		else if (lax_cmp(type_str, "sym_offset") ||
+			 lax_cmp(type_str, "so"))
+			type = TRACEFS_HIST_KEY_SYM_OFFSET;
+		else if (lax_cmp(type_str, "syscall") ||
+			 lax_cmp(type_str, "sc"))
+			type = TRACEFS_HIST_KEY_SYSCALL;
+		else if (lax_cmp(type_str, "execname") ||
+			 lax_cmp(type_str, "e"))
+			 type = TRACEFS_HIST_KEY_EXECNAME;
+		else if (lax_cmp(type_str, "log") ||
+			 lax_cmp(type_str, "l"))
+			type = TRACEFS_HIST_KEY_LOG;
+		else if (lax_cmp(type_str, "users") ||
+			 lax_cmp(type_str, "u"))
+			type = TRACEFS_HIST_KEY_USECS;
+		else if (lax_cmp(type_str, "max") ||
+			 lax_cmp(type_str, "m"))
+			type = TRACEFS_HIST_KEY_MAX;
+		else {
+			TfsError_fmt(NULL, "Unknown axis type %s\n",
+				     type_str);
+		}
+	} else if (PyLong_CheckExact(py_type)) {
+		type = PyLong_AsLong(py_type);
+	} else {
+		TfsError_fmt(NULL, "Unknown axis type %s\n");
+	}
+
+	return type;
+}
+
+static struct tracefs_hist *hist_from_key(struct tep_handle *tep,
+					  const char *system, const char *event,
+					  PyObject *py_key, PyObject * py_type)
+{
+	struct tracefs_hist *hist = NULL;
+	int type = 0;
+
+	if (PyUnicode_Check(py_key)) {
+		if (py_type) {
+			type = hist_key_type(py_type);
+			if (type < 0)
+				return NULL;
+		}
+
+		hist = tracefs_hist_alloc(tep, system, event,
+					  PyUnicode_DATA(py_key), type);
+	} else if (PyList_CheckExact(py_key)) {
+		int i, n_keys = PyList_Size(py_key);
+		struct tracefs_hist_axis *axes;
+		PyObject *item_type;
+
+		if (py_type) {
+			/*
+			 * The format of the types have to match the format
+			 * of the keys.
+			 */
+			if (!PyList_CheckExact(py_key) ||
+			    PyList_Size(py_type) != n_keys)
+				return NULL;
+		}
+
+		axes = calloc(n_keys + 1, sizeof(*axes));
+		if (!axes) {
+			MEM_ERROR
+			return NULL;
+		}
+
+		for (i = 0; i < n_keys; ++i) {
+			axes[i].key = str_from_list(py_key, i);
+			if (!axes[i].key)
+				return NULL;
+
+			if (py_type) {
+				item_type = PyList_GetItem(py_type, i);
+				if (!PyLong_CheckExact(item_type))
+					return NULL;
+
+				type = hist_key_type(item_type);
+				if (type < 0)
+					return NULL;
+
+				axes[i].type = type;
+			}
+		}
+
+		hist = tracefs_hist_alloc_nd(tep, system, event, axes);
+		free(axes);
+	}
+
+	return hist;
+}
+
+static struct tracefs_hist *hist_from_axis(struct tep_handle *tep,
+					   const char *system, const char *event,
+					   PyObject *py_axes)
+{
+	struct tracefs_hist *hist = NULL;
+	struct tracefs_hist_axis *axes;
+	PyObject *key, *value;
+	Py_ssize_t i = 0;
+	int n_axes;
+
+	n_axes = PyDict_Size(py_axes);
+	if (PyErr_Occurred())
+		return NULL;
+
+	axes = calloc(n_axes + 1, sizeof(*axes));
+	if (!axes) {
+		MEM_ERROR
+		return NULL;
+	}
+
+	while (PyDict_Next(py_axes, &i, &key, &value)) {
+		axes[i - 1].key = PyUnicode_DATA(key);
+		axes[i - 1].type = hist_key_type(value);
+		if (PyErr_Occurred()) {
+			PyErr_Print();
+			free(axes);
+			return NULL;
+		}
+	}
+
+	hist = tracefs_hist_alloc_nd(tep, system, event, axes);
+	free(axes);
+
+	return hist;
+}
+
+PyObject *PyFtrace_hist(PyObject *self, PyObject *args,
+					PyObject *kwargs)
+{
+	static char *kwlist[] =
+		{"system", "event", "key", "type", "axes", "name", NULL};
+	PyObject *py_axes = NULL, *py_key = NULL, *py_type = NULL;
+	const char *system, *event, *name = NULL;
+	struct tracefs_hist *hist = NULL;
+	struct tep_handle *tep;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "ss|OOOs",
+					 kwlist,
+					 &system,
+					 &event,
+					 &py_key,
+					 &py_type,
+					 &py_axes,
+					 &name)) {
+		return NULL;
+	}
+
+	tep = tracefs_local_events(tracefs_tracing_dir());
+	if (!tep)
+		goto fail;
+
+	if (py_key && ! py_axes) {
+		hist = hist_from_key(tep, system, event, py_key, py_type);
+	} else if (!py_key && py_axes) {
+		hist = hist_from_axis(tep, system, event, py_axes);
+	} else {
+		TfsError_setstr(NULL, "'key' or 'axis' must be provided.");
+		return NULL;
+	}
+
+	if (!hist)
+		goto fail;
+
+	if (name && tracefs_hist_add_name(hist, name) < 0)
+		goto fail;
+
+	return PyTraceHist_New(hist);
+
+ fail:
+	TfsError_fmt(NULL, "Failed to create histogram for %s/%s",
+		     system, event);
+	tracefs_hist_free(hist);
+	return NULL;
+}
+
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs)
 {

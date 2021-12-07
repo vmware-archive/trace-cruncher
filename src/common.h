@@ -26,16 +26,20 @@ static const char *NO_ARG = "/NONE/";
 
 #define TC_NIL_MSG	"(nil)"
 
-static inline bool is_all(const char *arg)
+static inline bool lax_cmp(const char *arg, const char *model)
 {
-	const char all[] = "all";
-	const char *p = &all[0];
+	const char *p = &model[0];
 
 	for (; *arg; arg++, p++) {
 		if (tolower(*arg) != *p)
 			return false;
 	}
 	return !(*p);
+}
+
+static inline bool is_all(const char *arg)
+{
+	return lax_cmp(arg, "all");
 }
 
 static inline bool is_no_arg(const char *arg)

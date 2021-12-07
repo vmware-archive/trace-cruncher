@@ -327,6 +327,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Define a kretprobe."
 	},
+	{"hist",
+	 (PyCFunction) PyFtrace_hist,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a histogram."
+	},
 	{"set_ftrace_loglevel",
 	 (PyCFunction) PyFtrace_set_ftrace_loglevel,
 	 METH_VARARGS | METH_KEYWORDS,
