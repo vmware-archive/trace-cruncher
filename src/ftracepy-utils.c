@@ -836,6 +836,165 @@ PyObject *PyTraceHist_sort_key_direction(PyTraceHist *self, PyObject *args,
 	Py_RETURN_NONE;
 }
 
+static bool get_optional_instance(PyObject *py_obj,
+				  struct tracefs_instance **instance)
+{
+	PyTfsInstance *py_inst;
+
+	if (!py_obj) {
+		*instance = NULL;
+		return true;
+	}
+
+	if (!PyTfsInstance_Check(py_obj)) {
+		PyErr_SetString(TRACECRUNCHER_ERROR,
+				"Passing argument \'instance\' with incompatible type.");
+		return false;
+	}
+
+	py_inst = (PyTfsInstance *)py_obj;
+	*instance = py_inst->ptrObj;
+
+	return true;
+}
+
+bool get_instance_from_arg(PyObject *args, PyObject *kwargs,
+			   struct tracefs_instance **instance)
+{
+	static char *kwlist[] = {"instance", NULL};
+	PyObject *py_inst = NULL;
+	*instance = NULL;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|O",
+					 kwlist,
+					 &py_inst)) {
+		return false;
+	}
+
+	if (!get_optional_instance(py_inst, instance))
+		return NULL;
+
+	return true;
+}
+
+static bool hist_cmd(PyTraceHist *self, PyObject *args, PyObject *kwargs,
+		     enum tracefs_hist_command cmd,
+		     const char *err_msg)
+{
+	struct tracefs_instance *instance;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	if (tracefs_hist_command(instance, self->ptrObj, cmd) < 0) {
+		char *buff;
+
+		if (asprintf(&buff, "%s %s",
+			     err_msg, get_hist_name(self->ptrObj)) <= 0) {
+			MEM_ERROR;
+			return false;
+		}
+
+		TfsError_setstr(instance, buff);
+		free(buff);
+
+		return false;
+	}
+
+	return true;
+}
+
+PyObject *PyTraceHist_start(PyTraceHist *self, PyObject *args,
+					       PyObject *kwargs)
+{
+	if (!hist_cmd(self, args, kwargs,
+		      TRACEFS_HIST_CMD_START,
+		      "Failed to start filling the histogram"))
+		return false;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyTraceHist_stop(PyTraceHist *self, PyObject *args,
+					      PyObject *kwargs)
+{
+	if (!hist_cmd(self, args, kwargs,
+		      TRACEFS_HIST_CMD_PAUSE,
+		      "Failed to stop filling the histogram"))
+		return false;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyTraceHist_resume(PyTraceHist *self, PyObject *args,
+						PyObject *kwargs)
+{
+	if (!hist_cmd(self, args, kwargs,
+		      TRACEFS_HIST_CMD_CONT,
+		      "Failed to resume filling the histogram"))
+		return false;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PyTraceHist_clear(PyTraceHist *self, PyObject *args,
+					       PyObject *kwargs)
+{
+	if (!hist_cmd(self, args, kwargs,
+		      TRACEFS_HIST_CMD_CLEAR,
+		      "Failed to clear the histogram"))
+		return false;
+
+	Py_RETURN_NONE;
+}
+
+static char *hist_read(PyTraceHist *self, PyObject *args,
+					  PyObject *kwargs)
+{
+	struct tracefs_instance *instance;
+	const char *hist_file = "hist";
+	char *data;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	data = tracefs_event_file_read(instance,
+				       tracefs_hist_get_system(self->ptrObj),
+				       tracefs_hist_get_event(self->ptrObj),
+				       hist_file,
+				       NULL);
+	if (!data) {
+		TfsError_fmt(instance,
+			     "Failed read data from histogram \'%s\'.",
+			     get_hist_name(self->ptrObj));
+	}
+
+	return data;
+}
+
+PyObject *PyTraceHist_read(PyTraceHist *self, PyObject *args,
+					      PyObject *kwargs)
+{
+	char *data = hist_read(self, args, kwargs);
+	PyObject *ret = PyUnicode_FromString(data);
+
+	free(data);
+	return ret;
+}
+
+PyObject *PyTraceHist_close(PyTraceHist *self, PyObject *args,
+					       PyObject *kwargs)
+{
+	if (!hist_cmd(self, args, kwargs,
+		      TRACEFS_HIST_CMD_DESTROY,
+		      "Failed to close the histogram"))
+		return false;
+
+	Py_RETURN_NONE;
+}
+
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());
@@ -965,49 +1124,6 @@ PyObject *PyFtrace_find_instance(PyObject *self, PyObject *args,
 	set_destroy_flag(py_inst, false);
 
 	return py_inst;
-}
-
-static bool get_optional_instance(PyObject *py_obj,
-				  struct tracefs_instance **instance)
-{
-	PyTfsInstance *py_inst;
-
-	if (!py_obj) {
-		*instance = NULL;
-		return true;
-	}
-
-	if (!PyTfsInstance_Check(py_obj)) {
-		PyErr_SetString(TRACECRUNCHER_ERROR,
-				"Passing argument \'instance\' with incompatible type.");
-		return false;
-	}
-
-	py_inst = (PyTfsInstance *)py_obj;
-	*instance = py_inst->ptrObj;
-
-	return true;
-}
-
-bool get_instance_from_arg(PyObject *args, PyObject *kwargs,
-			   struct tracefs_instance **instance)
-{
-	static char *kwlist[] = {"instance", NULL};
-	PyObject *py_inst = NULL;
-	*instance = NULL;
-
-	if (!PyArg_ParseTupleAndKeywords(args,
-					 kwargs,
-					 "|O",
-					 kwlist,
-					 &py_inst)) {
-		return false;
-	}
-
-	if (!get_optional_instance(py_inst, instance))
-		return NULL;
-
-	return true;
 }
 
 PyObject *PyFtrace_available_tracers(PyObject *self, PyObject *args,

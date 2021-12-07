@@ -101,6 +101,24 @@ PyObject *PyTraceHist_sort_keys(PyTraceHist *self, PyObject *args,
 PyObject *PyTraceHist_sort_key_direction(PyTraceHist *self, PyObject *args,
 							    PyObject *kwargs);
 
+PyObject *PyTraceHist_start(PyTraceHist *self, PyObject *args,
+					       PyObject *kwargs);
+
+PyObject *PyTraceHist_stop(PyTraceHist *self, PyObject *args,
+					      PyObject *kwargs);
+
+PyObject *PyTraceHist_resume(PyTraceHist *self, PyObject *args,
+						PyObject *kwargs);
+
+PyObject *PyTraceHist_clear(PyTraceHist *self, PyObject *args,
+					       PyObject *kwargs);
+
+PyObject *PyTraceHist_read(PyTraceHist *self, PyObject *args,
+					      PyObject *kwargs);
+
+PyObject *PyTraceHist_close(PyTraceHist *self, PyObject *args,
+					       PyObject *kwargs);
+
 PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);

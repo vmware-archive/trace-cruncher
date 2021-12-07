@@ -184,6 +184,36 @@ static PyMethodDef PyTraceHist_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Set the direction of a sort key field."
 	},
+	{"start",
+	 (PyCFunction) PyTraceHist_start,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Start acquiring data."
+	},
+	{"stop",
+	 (PyCFunction) PyTraceHist_stop,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Pause acquiring data."
+	},
+	{"resume",
+	 (PyCFunction) PyTraceHist_resume,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Continue acquiring data."
+	},
+	{"clear",
+	 (PyCFunction) PyTraceHist_clear,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Reset the histogram."
+	},
+	{"read",
+	 (PyCFunction) PyTraceHist_read,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Read the content of the histogram."
+	},
+	{"close",
+	 (PyCFunction) PyTraceHist_close,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Destroy the histogram."
+	},
 	{NULL, NULL, 0, NULL}
 };
 
