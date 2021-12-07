@@ -28,6 +28,8 @@ struct tracefs_dynevent;
 
 C_OBJECT_WRAPPER_DECLARE(tracefs_dynevent, PyDynevent);
 
+C_OBJECT_WRAPPER_DECLARE(tracefs_hist, PyTraceHist)
+
 PyObject *PyTepRecord_time(PyTepRecord* self);
 
 PyObject *PyTepRecord_cpu(PyTepRecord* self);

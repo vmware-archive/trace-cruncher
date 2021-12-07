@@ -168,6 +168,14 @@ C_OBJECT_WRAPPER(tracefs_dynevent, PyDynevent,
 		 dynevent_destroy,
 		 tracefs_dynevent_free)
 
+static PyMethodDef PyTraceHist_methods[] = {
+	{NULL, NULL, 0, NULL}
+};
+
+C_OBJECT_WRAPPER(tracefs_hist, PyTraceHist,
+		 NO_DESTROY,
+		 tracefs_hist_free)
+
 static PyMethodDef ftracepy_methods[] = {
 	{"dir",
 	 (PyCFunction) PyFtrace_dir,
@@ -387,6 +395,9 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	if (!PyDyneventTypeInit())
 		return NULL;
 
+	if (!PyTraceHistTypeInit())
+		return NULL;
+
 	TFS_ERROR = PyErr_NewException("tracecruncher.ftracepy.tfs_error",
 				       NULL, NULL);
 
@@ -403,7 +414,7 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	PyModule_AddObject(module, "tep_record", (PyObject *) &PyTepRecordType);
 	PyModule_AddObject(module, "tracefs_instance", (PyObject *) &PyTfsInstanceType);
 	PyModule_AddObject(module, "tracefs_dynevent", (PyObject *) &PyDyneventType);
-
+	PyModule_AddObject(module, "tracefs_hist", (PyObject *) &PyTraceHistType);
 
 	PyModule_AddObject(module, "tfs_error", TFS_ERROR);
 	PyModule_AddObject(module, "tep_error", TEP_ERROR);
