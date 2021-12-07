@@ -707,6 +707,135 @@ PyObject *PyTfsInstance_dir(PyTfsInstance *self)
 	return PyUnicode_FromString(tracefs_instance_get_dir(self->ptrObj));
 }
 
+PyObject *PyTraceHist_add_value(PyTraceHist *self, PyObject *args,
+						   PyObject *kwargs)
+{
+	static char *kwlist[] = {"value", NULL};
+	const char *value;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "s",
+					 kwlist,
+					 &value)) {
+		return NULL;
+	}
+
+	if (tracefs_hist_add_value(self->ptrObj, value) < 0) {
+		MEM_ERROR
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+const char *hist_noname = "unnamed";
+static inline const char *get_hist_name(struct tracefs_hist *hist)
+{
+	const char *name = tracefs_hist_get_name(hist);
+	return name ? name : hist_noname;
+}
+
+static bool add_sort_key(struct tracefs_hist *hist,
+			 const char *sort_key)
+{
+	if (tracefs_hist_add_sort_key(hist, sort_key) < 0) {
+		TfsError_fmt(NULL,
+			     "Failed to add sort key \'%s\'to histogram \'%s\'.",
+			     sort_key, get_hist_name(hist));
+		return false;
+	}
+
+	return true;
+}
+
+PyObject *PyTraceHist_sort_keys(PyTraceHist *self, PyObject *args,
+						   PyObject *kwargs)
+{
+	static char *kwlist[] = {"keys", NULL};
+	PyObject *py_obj;
+	const char *key;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "O",
+					 kwlist,
+					 &py_obj)) {
+		return NULL;
+	}
+
+	if (PyUnicode_Check(py_obj)) {
+		if (!add_sort_key(self->ptrObj, PyUnicode_DATA(py_obj)))
+			return NULL;
+	} else if (PyList_CheckExact(py_obj)) {
+		int i, n = PyList_Size(py_obj);
+
+		for (i = 0; i < n; ++i) {
+			key = str_from_list(py_obj, i);
+			if (!key ||
+			    !add_sort_key(self->ptrObj, key)) {
+				PyErr_SetString(TRACECRUNCHER_ERROR,
+						"Inconsistent \"keys\" argument.");
+				return NULL;
+			}
+		}
+	}
+
+	Py_RETURN_NONE;
+}
+
+static int sort_direction(PyObject *py_dir)
+{
+	int dir = -1;
+
+	if (PyLong_CheckExact(py_dir)) {
+		dir = PyLong_AsLong(py_dir);
+	} else if (PyUnicode_Check(py_dir)) {
+		const char *dir_str =  PyUnicode_DATA(py_dir);
+
+		if (lax_cmp(dir_str, "descending") ||
+		    lax_cmp(dir_str, "desc") ||
+		    lax_cmp(dir_str, "d"))
+			dir = 1;
+		else if (lax_cmp(dir_str, "ascending") ||
+			 lax_cmp(dir_str, "asc") ||
+			 lax_cmp(dir_str, "a"))
+			dir = 0;
+	}
+
+	return dir;
+}
+
+PyObject *PyTraceHist_sort_key_direction(PyTraceHist *self, PyObject *args,
+							    PyObject *kwargs)
+{
+	static char *kwlist[] = {"sort_key", "direction", NULL};
+	const char *sort_key;
+	PyObject *py_dir;
+	int dir;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "sO",
+					 kwlist,
+					 &sort_key,
+					 &py_dir)) {
+		return NULL;
+	}
+
+	dir = sort_direction(py_dir);
+
+	if (dir < 0 ||
+	    tracefs_hist_sort_key_direction(self->ptrObj, sort_key, dir) < 0) {
+		TfsError_fmt(NULL,
+			     "Failed to add sort direction to histogram \'%s\'.",
+			     get_hist_name(self->ptrObj));
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());

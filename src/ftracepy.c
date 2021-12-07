@@ -169,6 +169,21 @@ C_OBJECT_WRAPPER(tracefs_dynevent, PyDynevent,
 		 tracefs_dynevent_free)
 
 static PyMethodDef PyTraceHist_methods[] = {
+	{"add_value",
+	 (PyCFunction) PyTraceHist_add_value,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add value field."
+	},
+	{"sort_keys",
+	 (PyCFunction) PyTraceHist_sort_keys,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Set key felds or values to sort on."
+	},
+	{"sort_key_direction",
+	 (PyCFunction) PyTraceHist_sort_key_direction,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Set the direction of a sort key field."
+	},
 	{NULL, NULL, 0, NULL}
 };
 

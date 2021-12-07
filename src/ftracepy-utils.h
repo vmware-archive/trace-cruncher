@@ -92,6 +92,15 @@ PyObject *PyDynevent_disable(PyDynevent *self, PyObject *args,
 PyObject *PyDynevent_is_enabled(PyDynevent *self, PyObject *args,
 					      PyObject *kwargs);
 
+PyObject *PyTraceHist_add_value(PyTraceHist *self, PyObject *args,
+						   PyObject *kwargs);
+
+PyObject *PyTraceHist_sort_keys(PyTraceHist *self, PyObject *args,
+						   PyObject *kwargs);
+
+PyObject *PyTraceHist_sort_key_direction(PyTraceHist *self, PyObject *args,
+							    PyObject *kwargs);
+
 PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);
