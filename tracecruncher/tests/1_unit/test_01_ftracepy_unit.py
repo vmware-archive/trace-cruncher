@@ -582,5 +582,23 @@ class HistTestCase(unittest.TestCase):
         self.assertTrue('Available triggers:' in h_buff)
         f.close()
 
+    def test_hist_err(self):
+        inst = ft.create_instance(instance_name)
+        hist = ft.hist(system='kmem', event='kmalloc',
+                       axes={'call_site': 'sym',
+                             'bytes_alloc': 'n'})
+        err = 'Failed read data from histogram'
+        with self.assertRaises(Exception) as context:
+            hist.read(inst)
+        self.assertTrue(err in str(context.exception))
+
+        hist.start(inst)
+        err = 'Failed to start filling the histogram'
+        with self.assertRaises(Exception) as context:
+            hist.start(inst)
+        self.assertTrue(err in str(context.exception))
+        hist.close(inst)
+
+
 if __name__ == '__main__':
     unittest.main()
