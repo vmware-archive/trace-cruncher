@@ -978,6 +978,9 @@ PyObject *PyTraceHist_read(PyTraceHist *self, PyObject *args,
 					      PyObject *kwargs)
 {
 	char *data = hist_read(self, args, kwargs);
+	if (!data)
+		return NULL;
+
 	PyObject *ret = PyUnicode_FromString(data);
 
 	free(data);
