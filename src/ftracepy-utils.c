@@ -1037,6 +1037,28 @@ PyObject *PyFtrace_attach(PyObject *self, PyObject *args, PyObject *kwargs)
 	return set_destroy(args, kwargs, true);
 }
 
+static bool get_destroy_flag(PyObject *py_obj)
+{
+	PyFtrace_Object_HEAD *obj_head = (PyFtrace_Object_HEAD *)py_obj;
+	return obj_head->destroy;
+}
+
+PyObject *PyFtrace_is_attached(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	static char *kwlist[] = {"object", NULL};
+	PyObject *py_obj;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "O",
+					 kwlist,
+					 &py_obj)) {
+		return NULL;
+	}
+
+	return get_destroy_flag(py_obj) ? Py_True : Py_False;
+}
+
 static char aname_pool[] =
 	"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 

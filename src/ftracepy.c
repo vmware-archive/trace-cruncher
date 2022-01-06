@@ -237,6 +237,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Attach object to the \'ftracepy\' module."
 	},
+	{"is_attached",
+	 (PyCFunction) PyFtrace_is_attached,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Check if the object is attached to the \'ftracepy\' module."
+	},
 	{"create_instance",
 	 (PyCFunction) PyFtrace_create_instance,
 	 METH_VARARGS | METH_KEYWORDS,
