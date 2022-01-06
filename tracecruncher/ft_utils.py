@@ -210,3 +210,127 @@ class kretval_probe(kprobe_base):
         """
         self.kp = ft.register_kprobe(event=self.name, function=self.func);
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
+
+
+class khist:
+    def __init__(self, name, event, axes, weights=[],
+                 sort_keys=[], sort_dir={}, find=False):
+        """ Constructor.
+        """
+        self.name = name
+        self.inst = None
+
+        inst_name = name+'_inst'
+        if find:
+            self.inst = ft.find_instance(name=inst_name)
+            self.attached = False
+        else:
+            self.inst = ft.create_instance(name=inst_name)
+            self.attached = True
+
+        self.hist = ft.hist(name=name,
+                            system=event.system,
+                            event=event.name,
+                            axes=axes)
+
+        for v in weights:
+            self.hist.add_value(value=v)
+
+        self.hist.sort_keys(keys=sort_keys)
+
+        for key, val in sort_dir.items():
+            self.hist.sort_key_direction(sort_key=key,
+                                         direction=val)
+
+        self.trigger = '{0}/events/{1}/{2}/trigger'.format(self.inst.dir(),
+                                                           event.system,
+                                                           event.name)
+
+        if not find:
+            # Put the kernel histogram on 'standby'
+            self.hist.stop(self.inst)
+
+    def __del__(self):
+        """ Destructor.
+        """
+        if self.inst and self.attached:
+            self.clear()
+
+    def start(self):
+        """ Start accumulating data.
+        """
+        self.hist.resume(self.inst)
+
+    def stop(self):
+        """ Stop accumulating data.
+        """
+        self.hist.stop(self.inst)
+
+    def resume(self):
+        """ Continue accumulating data.
+        """
+        self.hist.resume(self.inst)
+
+    def data(self):
+        """ Read the accumulated data.
+        """
+        return self.hist.read(self.inst)
+
+    def clear(self):
+        """ Clear the accumulated data.
+        """
+        self.hist.clear(self.inst)
+
+    def detach(self):
+        """ Detach the object from the Python module.
+        """
+        ft.detach(self.inst)
+        self.attached = False
+
+    def attach(self):
+        """ Attach the object to the Python module.
+        """
+        ft.attach(self.inst)
+        self.attached = True
+
+    def is_attached(self):
+        """ Check if the object is attached to the Python module.
+        """
+        return self.attached
+
+    def __repr__(self):
+        """ Read the descriptor of the histogram.
+        """
+        with open(self.trigger) as f:
+            return f.read().rstrip()
+
+    def __str__(self):
+        return self.data()
+
+
+def create_khist(name, event, axes, weights=[],
+                 sort_keys=[], sort_dir={}):
+    """ Create new kernel histogram.
+    """
+    try:
+        hist = khist(name=name, event=event, axes=axes, weights=weights,
+                     sort_keys=sort_keys, sort_dir=sort_dir, find=False)
+    except Exception as err:
+        msg = 'Failed to create histogram \'{0}\''.format(name)
+        raise RuntimeError(msg) from err
+
+    return hist
+
+
+def find_khist(name, event, axes, instance=None,
+               weights=[], sort_keys=[], sort_dir={}):
+    """ Find existing kernel histogram.
+    """
+    try:
+        hist = khist(name=name, event=event, axes=axes, weights=weights,
+                     sort_keys=sort_keys, sort_dir=sort_dir, find=True)
+    except Exception as err:
+        msg = 'Failed to find histogram \'{0}\''.format(name)
+        raise RuntimeError(msg) from err
+
+    return hist
