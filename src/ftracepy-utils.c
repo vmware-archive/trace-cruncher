@@ -307,6 +307,20 @@ static const char **get_arg_list(PyObject *py_list)
 	return NULL;
 }
 
+static struct tep_handle *get_tep(const char *dir, const char **sys_names)
+{
+	struct tep_handle *tep;
+
+	tep = tracefs_local_events_system(dir, sys_names);
+	if (!tep) {
+		TfsError_fmt(NULL,
+			     "Failed to get local 'tep' event from %s", dir);
+		return NULL;
+	}
+
+	return tep;
+}
+
 PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 					PyObject *kwargs)
 {
@@ -333,17 +347,14 @@ PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 			return NULL;
 		}
 
-		tep = tracefs_local_events_system(dir_str, sys_names);
+		tep = get_tep(dir_str, sys_names);
 		free(sys_names);
 	} else {
-		tep = tracefs_local_events(dir_str);
+		tep = get_tep(dir_str, NULL);
 	}
 
-	if (!tep) {
-		TfsError_fmt(NULL, "Failed to get local events from \'%s\'.",
-			     dir_str);
+	if (!tep)
 		return NULL;
-	}
 
 	tep_free(self->ptrObj);
 	self->ptrObj = tep;
@@ -2075,11 +2086,9 @@ PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
 	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
-	tep = tracefs_local_events(NULL);
-	if (!tep) {
-		TfsError_setstr(NULL, "Failed to get local events.");
+	tep = get_tep(NULL, NULL);
+	if (!tep)
 		return NULL;
-	}
 
 	event = tracefs_dynevent_get_event(tep, self->ptrObj);
 	if (!event) {
@@ -2139,11 +2148,9 @@ PyObject *PyDynevent_clear_filter(PyDynevent *self, PyObject *args,
 	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
 
-	tep = tracefs_local_events(NULL);
-	if (!tep) {
-		TfsError_setstr(NULL, "Failed to get local events.");
+	tep = get_tep(NULL, NULL);
+	if (!tep)
 		return NULL;
-	}
 
 	event = tracefs_dynevent_get_event(tep, self->ptrObj);
 	if (!event) {
@@ -2391,9 +2398,9 @@ PyObject *PyFtrace_hist(PyObject *self, PyObject *args,
 		return NULL;
 	}
 
-	tep = tracefs_local_events(tracefs_tracing_dir());
+	tep = get_tep(NULL, NULL);
 	if (!tep)
-		goto fail;
+		return NULL;
 
 	if (py_key && ! py_axes) {
 		hist = hist_from_key(tep, system, event, py_key, py_type);
@@ -2622,13 +2629,9 @@ static bool init_callback_tep(struct tracefs_instance *instance,
 	if (!*py_func)
 		return false;
 
-	*tep = tracefs_local_events(tracefs_instance_get_dir(instance));
-	if (!*tep) {
-		TfsError_fmt(instance,
-			     "Unable to get 'tep' event from instance \'%s\'.",
-			     get_instance_name(instance));
+	*tep = get_tep(tracefs_instance_get_dir(instance), NULL);
+	if (!*tep)
 		return false;
-	}
 
 	if (!notrace_this_pid(instance))
 		return false;
@@ -2814,7 +2817,10 @@ PyObject *PyFtrace_iterate_trace(PyObject *self, PyObject *args,
 	    !notrace_this_pid(itr_instance))
 		return NULL;
 
-	tep = tracefs_local_events(tracefs_instance_get_dir(itr_instance));
+	tep = get_tep(tracefs_instance_get_dir(itr_instance), NULL);
+	if (!tep)
+		return NULL;
+
 	(*(volatile bool *)callback_status) = true;
 	callback_ctx.py_callback = py_func;
 	tracing_ON(itr_instance);

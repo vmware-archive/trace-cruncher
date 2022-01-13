@@ -80,9 +80,9 @@ class PyTepTestCase(unittest.TestCase):
             tep.init_local(systems=['sched', 'irq']);
         self.assertTrue(err in str(context.exception))
 
-        err='Failed to get local events from \'no_dir\''
+        err='Failed to get local \'tep\' event from /no/dir'
         with self.assertRaises(Exception) as context:
-            tep.init_local(dir='no_dir', systems=['sched', 'irq']);
+            tep.init_local(dir='/no/dir', systems=['sched', 'irq'])
         self.assertTrue(err in str(context.exception))
 
     def test_get_event(self):
