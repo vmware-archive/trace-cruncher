@@ -30,6 +30,8 @@ C_OBJECT_WRAPPER_DECLARE(tracefs_dynevent, PyDynevent);
 
 C_OBJECT_WRAPPER_DECLARE(tracefs_hist, PyTraceHist)
 
+C_OBJECT_WRAPPER_DECLARE(tracefs_synth, PySynthEvent)
+
 PyObject *PyTepRecord_time(PyTepRecord* self);
 
 PyObject *PyTepRecord_cpu(PyTepRecord* self);
@@ -209,6 +211,9 @@ PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
 
 PyObject *PyFtrace_hist(PyObject *self, PyObject *args,
 					PyObject *kwargs);
+
+PyObject *PyFtrace_synth(PyObject *self, PyObject *args,
+					 PyObject *kwargs);
 
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs);

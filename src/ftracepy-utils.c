@@ -2426,6 +2426,64 @@ PyObject *PyFtrace_hist(PyObject *self, PyObject *args,
 	return NULL;
 }
 
+PyObject *PyFtrace_synth(PyObject *self, PyObject *args,
+					 PyObject *kwargs)
+{
+	const char *name, *start_match, *end_match, *match_name=NULL;
+	const char *start_sys, *start_evt, *end_sys, *end_evt;
+	static char *kwlist[] = {"name",
+				 "start_sys",
+				 "start_evt",
+				 "end_sys",
+				 "end_evt",
+				 "start_match",
+				 "end_match",
+				 "match_name",
+				 NULL};
+	static struct tracefs_synth *synth;
+	struct tep_handle *tep;
+	PyObject *py_synth;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "sssssss|s",
+					 kwlist,
+					 &name,
+					 &start_sys,
+					 &start_evt,
+					 &end_sys,
+					 &end_evt,
+					 &start_match,
+					 &end_match,
+					 &match_name)) {
+		return NULL;
+	}
+
+	tep = get_tep(NULL, NULL);
+	if (!tep)
+		return NULL;
+
+	synth = tracefs_synth_alloc(tep, name,
+				    start_sys, start_evt,
+				    end_sys, end_evt,
+				    start_match, end_match,
+				    match_name);
+	tep_free(tep);
+	if (!synth) {
+		MEM_ERROR;
+		return NULL;
+	}
+
+	py_synth = PySynthEvent_New(synth);
+	/*
+	 * Here we only allocated and initializes a synthetic event object.
+	 * However, no synthetic event is added to the system yet. Hence,
+	 * there is no need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag(py_synth, false);
+	return py_synth;
+}
+
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs)
 {
