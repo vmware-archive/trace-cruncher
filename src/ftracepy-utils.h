@@ -121,6 +121,12 @@ PyObject *PyTraceHist_read(PyTraceHist *self, PyObject *args,
 PyObject *PyTraceHist_close(PyTraceHist *self, PyObject *args,
 					       PyObject *kwargs);
 
+PyObject *PySynthEvent_add_start_fields(PySynthEvent *self, PyObject *args,
+							    PyObject *kwargs);
+
+PyObject *PySynthEvent_add_end_fields(PySynthEvent *self, PyObject *args,
+							  PyObject *kwargs);
+
 PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);

@@ -222,6 +222,16 @@ C_OBJECT_WRAPPER(tracefs_hist, PyTraceHist,
 		 tracefs_hist_free)
 
 static PyMethodDef PySynthEvent_methods[] = {
+	{"add_start_fields",
+	 (PyCFunction) PySynthEvent_add_start_fields,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add fields from the start event to save."
+	},
+	{"add_end_fields",
+	 (PyCFunction) PySynthEvent_add_end_fields,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add fields from the end event to save."
+	},
 	{NULL, NULL, 0, NULL}
 };
 

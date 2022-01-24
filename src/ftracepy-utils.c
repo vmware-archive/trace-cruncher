@@ -1009,6 +1009,70 @@ PyObject *PyTraceHist_close(PyTraceHist *self, PyObject *args,
 	Py_RETURN_NONE;
 }
 
+typedef int (*add_field_ptr)(struct tracefs_synth *,
+			     const char *,
+			     const char *);
+
+PyObject *synth_add_fields(PySynthEvent *self, PyObject *args,
+					       PyObject *kwargs,
+					       bool to_start)
+{
+	static char *kwlist[] = {"fields", "names", NULL};
+	PyObject *py_fields, *py_names = NULL;
+	PyObject *item_field, *item_name;
+	add_field_ptr add_field_func;
+	const char *field, *name;
+	int ret, n, i;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "O|O",
+					 kwlist,
+					 &py_fields,
+					 &py_names)) {
+		return NULL;
+	}
+
+	add_field_func = to_start ? tracefs_synth_add_start_field:
+				    tracefs_synth_add_end_field;
+
+	n = PyList_Size(py_fields);
+	for (i = 0; i < n; ++i) {
+		item_field = PyList_GetItem(py_fields, i);
+		field = PyUnicode_DATA(item_field);
+
+		name = NULL;
+		if (py_names) {
+			item_name = PyList_GetItem(py_names, i);
+			if (item_name && item_name != Py_None)
+				name = PyUnicode_DATA(item_name);
+		}
+
+		ret = add_field_func(self->ptrObj, field, name);
+		if (ret < 0) {
+			TfsError_fmt(NULL,
+				     "Failed to add %s field '%s' to synth. event %s",
+				     to_start ? "start" : "end", field,
+				     tracefs_synth_get_name(self->ptrObj));
+			return NULL;
+		}
+	}
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PySynthEvent_add_start_fields(PySynthEvent *self, PyObject *args,
+							    PyObject *kwargs)
+{
+	return synth_add_fields(self, args, kwargs, true);
+}
+
+PyObject *PySynthEvent_add_end_fields(PySynthEvent *self, PyObject *args,
+							  PyObject *kwargs)
+{
+	return synth_add_fields(self, args, kwargs, false);
+}
+
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());
