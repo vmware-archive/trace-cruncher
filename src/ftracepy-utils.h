@@ -139,6 +139,10 @@ PyObject *PySynthEvent_add_delta_T(PySynthEvent *self, PyObject *args,
 PyObject *PySynthEvent_add_sum(PySynthEvent *self, PyObject *args,
 						   PyObject *kwargs);
 
+PyObject *PySynthEvent_register(PySynthEvent *self);
+
+PyObject *PySynthEvent_unregister(PySynthEvent *self);
+
 PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);

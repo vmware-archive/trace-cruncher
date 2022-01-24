@@ -1154,15 +1154,47 @@ PyObject *PySynthEvent_add_delta_T(PySynthEvent *self, PyObject *args,
 	Py_RETURN_NONE;
 }
 
-PyObject *PyFtrace_dir(PyObject *self)
-{
-	return PyUnicode_FromString(tracefs_tracing_dir());
-}
-
 static void set_destroy_flag(PyObject *py_obj, bool val)
 {
 	PyFtrace_Object_HEAD *obj_head = (PyFtrace_Object_HEAD *)py_obj;
 	obj_head->destroy = val;
+}
+
+PyObject *PySynthEvent_register(PySynthEvent *self)
+{
+	if (tracefs_synth_create(self->ptrObj) < 0) {
+		TfsError_fmt(NULL, "Failed to register synth. event %s",
+			     tracefs_synth_get_name(self->ptrObj));
+		return NULL;
+	}
+
+	/*
+	 * Here the synthetic event gets added to the system.
+	 * Hence we need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag((PyObject *)self, true);
+	Py_RETURN_NONE;
+}
+
+PyObject *PySynthEvent_unregister(PySynthEvent *self)
+{
+	if (tracefs_synth_destroy(self->ptrObj) < 0) {
+		TfsError_fmt(NULL, "Failed to unregister synth. event %s",
+			     tracefs_synth_get_name(self->ptrObj));
+		return NULL;
+	}
+
+	/*
+	 * Here the synthetic event gets removed from the system.
+	 * Hence we no loger need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag((PyObject *)self, false);
+	Py_RETURN_NONE;
+}
+
+PyObject *PyFtrace_dir(PyObject *self)
+{
+	return PyUnicode_FromString(tracefs_tracing_dir());
 }
 
 static PyObject *set_destroy(PyObject *args, PyObject *kwargs, bool destroy)

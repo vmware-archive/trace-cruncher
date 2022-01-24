@@ -252,6 +252,16 @@ static PyMethodDef PySynthEvent_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Add 'start + end' field."
 	},
+	{"register",
+	 (PyCFunction) PySynthEvent_register,
+	 METH_NOARGS,
+	 "Register synth. event to a trace instance."
+	},
+	{"unregister",
+	 (PyCFunction) PySynthEvent_unregister,
+	 METH_NOARGS,
+	 "Unregister synth. event from a trace instance."
+	},
 	{NULL, NULL, 0, NULL}
 };
 
