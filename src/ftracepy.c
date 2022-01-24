@@ -292,6 +292,11 @@ static PyMethodDef PySynthEvent_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Clear the filter of a synthetic event."
 	},
+	{"repr",
+	 (PyCFunction) PySynthEvent_repr,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Show a representative descriptor of the synth. event."
+	},
 	{NULL, NULL, 0, NULL}
 };
 

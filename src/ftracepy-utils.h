@@ -161,6 +161,8 @@ PyObject *PySynthEvent_get_filter(PySynthEvent *self, PyObject *args,
 PyObject *PySynthEvent_clear_filter(PySynthEvent *self, PyObject *args,
 							PyObject *kwargs);
 
+PyObject *PySynthEvent_repr(PySynthEvent *self, PyObject *args, PyObject *kwargs);
+
 PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);

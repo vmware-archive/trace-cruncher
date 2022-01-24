@@ -1192,6 +1192,58 @@ PyObject *PySynthEvent_unregister(PySynthEvent *self)
 	Py_RETURN_NONE;
 }
 
+PyObject *PySynthEvent_repr(PySynthEvent *self, PyObject *args, PyObject *kwargs)
+{
+	static char *kwlist[] = {"event", "hist_start", "hist_end", NULL};
+	int event, hist_start, hist_end;
+	char buff[2048] = {0};
+	bool new_line = false;
+	const char *str = NULL;
+
+	event = hist_start = hist_end = true;
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|ppp",
+					 kwlist,
+					 &event,
+					 &hist_start,
+					 &hist_end)) {
+		return NULL;
+	}
+
+	if (event) {
+		strcat(buff, "synth. event: ");
+		str = tracefs_synth_show_event(self->ptrObj);
+		if (str)
+			strcat(buff, str);
+		new_line = true;
+	}
+
+	if (hist_start) {
+		if (new_line)
+			strcat(buff, "\n");
+		else
+			new_line = true;
+
+		strcat(buff, "hist. start: ");
+		str = tracefs_synth_show_start_hist(self->ptrObj);
+		if (str)
+			strcat(buff, str);
+	}
+
+	if (hist_end) {
+		if (new_line)
+			strcat(buff, "\n");
+
+		strcat(buff, "hist. end: ");
+		str = tracefs_synth_show_end_hist(self->ptrObj);
+		if (str)
+			strcat(buff, str);
+	}
+
+	return PyUnicode_FromString(strdup(buff));
+}
+
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());
