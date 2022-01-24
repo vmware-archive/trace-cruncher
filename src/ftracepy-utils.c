@@ -2241,13 +2241,34 @@ PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
 	return PyDynevent_New(kprobe);
 }
 
-PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
-						  PyObject *kwargs)
+struct tep_event *dynevent_get_event(PyDynevent *event,
+				     struct tep_handle **tep_ptr)
+{
+	struct tep_event *tep_evt;
+	struct tep_handle *tep;
+
+	tep = get_tep(NULL, NULL);
+	if (!tep)
+		return NULL;
+
+	tep_evt = tracefs_dynevent_get_event(tep, event->ptrObj);
+	if (!tep_evt) {
+		TfsError_setstr(NULL, "Failed to get dynevent.");
+		return NULL;
+	}
+
+	if (tep_ptr)
+		*tep_ptr = tep;
+
+	return tep_evt;
+}
+
+static PyObject *set_filter(PyObject *args, PyObject *kwargs,
+			    struct tep_handle *tep,
+			    struct tep_event *event)
 {
 	struct tracefs_instance *instance;
 	PyObject *py_inst = NULL;
-	struct tep_handle * tep;
-	struct tep_event *event;
 	const char *filter;
 
 	static char *kwlist[] = {"filter", "instance", NULL};
@@ -2263,16 +2284,6 @@ PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
 	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
-	tep = get_tep(NULL, NULL);
-	if (!tep)
-		return NULL;
-
-	event = tracefs_dynevent_get_event(tep, self->ptrObj);
-	if (!event) {
-		TfsError_setstr(NULL, "Failed to get event.");
-		return NULL;
-	}
-
 	if (tracefs_event_filter_apply(instance, event, filter) < 0) {
 		TfsError_fmt(NULL, "Failed to apply filter '%s' to event '%s'.",
 			     filter, event->name);
@@ -2282,58 +2293,35 @@ PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
 	Py_RETURN_NONE;
 }
 
-PyObject *PyDynevent_get_filter(PyDynevent *self, PyObject *args,
-						  PyObject *kwargs)
+static PyObject *get_filter(PyObject *args, PyObject *kwargs,
+			    const char *system, const char* event )
 {
-	char *evt_name, *evt_system, *filter = NULL;
 	struct tracefs_instance *instance;
 	PyObject *ret = NULL;
+	char *filter = NULL;
 	char path[PATH_MAX];
-	int type;
 
 	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
 
-	type = tracefs_dynevent_info(self->ptrObj, &evt_system, &evt_name,
-				     NULL, NULL, NULL);
-	if (type == TRACEFS_DYNEVENT_UNKNOWN) {
-		PyErr_SetString(TFS_ERROR, "Failed to get dynevent info.");
-		return NULL;
-	}
-
-	sprintf(path, "events/%s/%s/filter", evt_system, evt_name);
+	sprintf(path, "events/%s/%s/filter", system, event);
 	if (read_from_file(instance, path, &filter) <= 0)
-		goto free;
+		return NULL;
 
 	trim_new_line(filter);
 	ret = PyUnicode_FromString(filter);
- free:
-	free(evt_system);
-	free(evt_name);
 	free(filter);
 
 	return ret;
 }
 
-PyObject *PyDynevent_clear_filter(PyDynevent *self, PyObject *args,
-						    PyObject *kwargs)
+static PyObject *clear_filter(PyObject *args, PyObject *kwargs,
+			      struct tep_event *event)
 {
 	struct tracefs_instance *instance;
-	struct tep_handle * tep;
-	struct tep_event *event;
 
 	if (!get_instance_from_arg(args, kwargs, &instance))
 		return NULL;
-
-	tep = get_tep(NULL, NULL);
-	if (!tep)
-		return NULL;
-
-	event = tracefs_dynevent_get_event(tep, self->ptrObj);
-	if (!event) {
-		TfsError_setstr(NULL, "Failed to get event.");
-		return NULL;
-	}
 
 	if (tracefs_event_filter_clear(instance, event) < 0) {
 		TfsError_fmt(NULL, "Failed to clear filter for event '%s'.",
@@ -2342,6 +2330,51 @@ PyObject *PyDynevent_clear_filter(PyDynevent *self, PyObject *args,
 	}
 
 	Py_RETURN_NONE;
+}
+
+PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
+						  PyObject *kwargs)
+{
+	struct tep_handle *tep;
+	struct tep_event *evt;
+
+	evt = dynevent_get_event(self, &tep);
+	if (!evt)
+		return NULL;
+
+	return set_filter(args, kwargs, tep, evt);
+}
+
+PyObject *PyDynevent_get_filter(PyDynevent *self, PyObject *args,
+						  PyObject *kwargs)
+{
+	struct tep_event *evt = dynevent_get_event(self, NULL);
+	char *evt_name, *evt_system;
+	int type;
+
+	if (!evt)
+		return NULL;
+
+	type = tracefs_dynevent_info(self->ptrObj, &evt_system, &evt_name,
+				     NULL, NULL, NULL);
+
+	if (type == TRACEFS_DYNEVENT_UNKNOWN) {
+		PyErr_SetString(TFS_ERROR, "Failed to get dynevent info.");
+		return NULL;
+	}
+
+	return get_filter(args, kwargs, evt_system, evt_name);
+}
+
+PyObject *PyDynevent_clear_filter(PyDynevent *self, PyObject *args,
+						    PyObject *kwargs)
+{
+	struct tep_event *evt = dynevent_get_event(self, NULL);
+
+	if (!evt)
+		return NULL;
+
+	return clear_filter(args, kwargs, evt);
 }
 
 static bool enable_dynevent(PyDynevent *self, PyObject *args, PyObject *kwargs,
