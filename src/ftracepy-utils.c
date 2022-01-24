@@ -2661,6 +2661,51 @@ PyObject *PyFtrace_synth(PyObject *self, PyObject *args,
 	return py_synth;
 }
 
+#define SYNTH_SYS "synthetic"
+
+static bool enable_synth(PySynthEvent *self, PyObject *args, PyObject *kwargs,
+			 bool enable)
+{
+	struct tracefs_instance *instance;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	return event_enable_disable(instance, SYNTH_SYS,
+				    tracefs_synth_get_name(self->ptrObj),
+				    enable);
+}
+
+PyObject *PySynthEvent_enable(PySynthEvent *self, PyObject *args,
+						  PyObject *kwargs)
+{
+	if (!enable_synth(self, args, kwargs, true))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PySynthEvent_disable(PySynthEvent *self, PyObject *args,
+						   PyObject *kwargs)
+{
+	if (!enable_synth(self, args, kwargs, false))
+		return NULL;
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PySynthEvent_is_enabled(PySynthEvent *self, PyObject *args,
+						      PyObject *kwargs)
+{
+	struct tracefs_instance *instance;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	return event_is_enabled(instance, SYNTH_SYS,
+				tracefs_synth_get_name(self->ptrObj));
+}
+
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs)
 {

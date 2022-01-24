@@ -143,6 +143,15 @@ PyObject *PySynthEvent_register(PySynthEvent *self);
 
 PyObject *PySynthEvent_unregister(PySynthEvent *self);
 
+PyObject *PySynthEvent_enable(PySynthEvent *self, PyObject *args,
+						  PyObject *kwargs);
+
+PyObject *PySynthEvent_disable(PySynthEvent *self, PyObject *args,
+						   PyObject *kwargs);
+
+PyObject *PySynthEvent_is_enabled(PySynthEvent *self, PyObject *args,
+						      PyObject *kwargs);
+
 PyObject *PyFtrace_dir(PyObject *self);
 
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);

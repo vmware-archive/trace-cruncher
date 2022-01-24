@@ -262,6 +262,21 @@ static PyMethodDef PySynthEvent_methods[] = {
 	 METH_NOARGS,
 	 "Unregister synth. event from a trace instance."
 	},
+	{"enable",
+	 (PyCFunction) PySynthEvent_enable,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Enable synth. event."
+	},
+	{"disable",
+	 (PyCFunction) PySynthEvent_disable,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Disable synth. event."
+	},
+	{"is_enabled",
+	 (PyCFunction) PySynthEvent_is_enabled,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Check if synth. event is enabled."
+	},
 	{NULL, NULL, 0, NULL}
 };
 
