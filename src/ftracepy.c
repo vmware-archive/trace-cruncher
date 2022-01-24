@@ -277,6 +277,21 @@ static PyMethodDef PySynthEvent_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Check if synth. event is enabled."
 	},
+	{"set_filter",
+	 (PyCFunction) PySynthEvent_set_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a filter for a synthetic event."
+	},
+	{"get_filter",
+	 (PyCFunction) PySynthEvent_get_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Get the filter of a synthetic event."
+	},
+	{"clear_filter",
+	 (PyCFunction) PySynthEvent_clear_filter,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Clear the filter of a synthetic event."
+	},
 	{NULL, NULL, 0, NULL}
 };
 

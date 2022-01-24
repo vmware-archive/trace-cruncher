@@ -2739,6 +2739,62 @@ PyObject *PySynthEvent_is_enabled(PySynthEvent *self, PyObject *args,
 				tracefs_synth_get_name(self->ptrObj));
 }
 
+struct tep_event *synth_get_event(PySynthEvent *event, struct tep_handle **tep_ptr)
+{
+	struct tep_event *tep_evt;
+	struct tep_handle *tep;
+
+	tep = get_tep(NULL, NULL);
+	if (!tep)
+		return NULL;
+
+	tep_evt = tracefs_synth_get_event(tep, event->ptrObj);
+	if (!tep_evt) {
+		TfsError_setstr(NULL, "Failed to get synth. event.");
+		return NULL;
+	}
+
+	if (tep_ptr)
+		*tep_ptr = tep;
+
+	return tep_evt;
+}
+
+PyObject *PySynthEvent_set_filter(PySynthEvent *self, PyObject *args,
+						      PyObject *kwargs)
+{
+	struct tep_handle *tep;
+	struct tep_event *evt;
+
+	evt = synth_get_event(self, &tep);
+	if (!evt)
+		return NULL;
+
+	return set_filter(args, kwargs, tep, evt);
+}
+
+PyObject *PySynthEvent_get_filter(PySynthEvent *self, PyObject *args,
+						      PyObject *kwargs)
+{
+	struct tep_event *evt = synth_get_event(self, NULL);
+
+	if (!evt)
+		return NULL;
+
+	return get_filter(args, kwargs, SYNTH_SYS, evt->name);
+}
+
+PyObject *PySynthEvent_clear_filter(PySynthEvent *self, PyObject *args,
+							PyObject *kwargs)
+{
+	struct tep_event *evt = synth_get_event(self, NULL);
+
+	if (!evt)
+		return NULL;
+
+	return clear_filter(args, kwargs, evt);
+}
+
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs)
 {
