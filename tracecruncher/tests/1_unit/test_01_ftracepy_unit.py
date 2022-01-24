@@ -691,5 +691,91 @@ class HistOopTestCase(unittest.TestCase):
         self.assertTrue(err in str(context.exception))
 
 
+class SyntTestCase(unittest.TestCase):
+    def test_synt_create(self):
+        synth = ft.synth(name='wakeup_lat',
+                         start_sys='sched', start_evt='sched_waking',
+                         end_sys='sched',   end_evt='sched_switch',
+                         start_match='pid', end_match='next_pid',
+                         match_name='pid')
+
+        synth.add_start_fields(fields=['target_cpu', 'prio'],
+                               names=['cpu', None])
+        synth.add_end_fields(fields=['prev_prio', 'next_prio'],
+                             names=[None, 'nxt_p'])
+        synth.register()
+
+        event = synth.repr(event=True, hist_start=False, hist_end=False)
+        hist_s = synth.repr(event=False, hist_start=True, hist_end=False)
+        hist_e = synth.repr(event=False, hist_start=False, hist_end=True)
+
+        self.assertTrue('keys=pid'in hist_s)
+        self.assertTrue('keys=next_pid' in hist_e)
+        self.assertTrue('pid=next_pid' in hist_e)
+        self.assertTrue('onmatch(sched.sched_waking).trace(wakeup_lat,$pid' in hist_e)
+
+        self.assertTrue('s32 cpu;' in event)
+        self.assertTrue('s32 prio;' in event)
+        hist_s = synth.repr(event=False, hist_start=True, hist_end=False)
+        split_1 = hist_s.split('__arg_')
+        arg1 = '__arg_' + split_1[1].split('=')[0]
+        arg2 = '__arg_' + split_1[2].split('=')[0]
+        self.assertTrue(arg1 + '=target_cpu' in hist_s)
+        self.assertTrue(arg2 + '=prio' in hist_s)
+        hist_e = synth.repr(event=False, hist_start=False, hist_end=True)
+        self.assertTrue('cpu=$' + arg1 in hist_e)
+        self.assertTrue('prio=$' + arg2 in hist_e)
+        split_2 = hist_e.split('trace(')
+        self.assertTrue('$pid' in split_2[1])
+        self.assertTrue('$prio' in split_2[1])
+
+        event = synth.repr(event=True, hist_start=False, hist_end=False)
+        self.assertTrue('s32 prev_prio;' in event)
+        self.assertTrue('s32 nxt_p;' in event)
+        hist_e = synth.repr(event=False, hist_start=False, hist_end=True)
+        self.assertTrue('nxt_p=next_prio' in hist_e)
+        split_3 = hist_e.split('__arg_')
+        arg3 = '__arg_' + split_3[3].split('=')[0]
+        self.assertTrue(arg3 + '=prev_prio' in hist_e)
+        split_4 = hist_e.split('trace(')
+        self.assertTrue('$nxt_p' in split_4[1])
+        self.assertTrue('$' + arg3 in split_4[1])
+
+        synth.unregister()
+
+    def test_synt_enable(self):
+        synth = ft.synth(name='wakeup_lat',
+                         start_sys='sched', start_evt='sched_waking',
+                         end_sys='sched',   end_evt='sched_switch',
+                         start_match='pid', end_match='next_pid',
+                         match_name='pid')
+        synth.register()
+        ret = synth.is_enabled()
+        self.assertEqual(ret, '0')
+        synth.enable()
+        ret = synth.is_enabled()
+        self.assertEqual(ret, '1')
+        synth.disable()
+        ret = synth.is_enabled()
+        self.assertEqual(ret, '0')
+        synth.unregister()
+
+    def test_synt_enable(self):
+        evt_filter = 'prio<100'
+        synth = ft.synth(name='wakeup_lat',
+                         start_sys='sched', start_evt='sched_waking',
+                         end_sys='sched',   end_evt='sched_switch',
+                         start_match='pid', end_match='next_pid',
+                         match_name='pid')
+        synth.add_start_fields(fields=['prio'])
+        synth.register()
+        self.assertEqual('none', synth.get_filter())
+        synth.set_filter(filter=evt_filter)
+        self.assertEqual(evt_filter, synth.get_filter())
+        synth.clear_filter()
+        self.assertEqual('none', synth.get_filter())
+        synth.unregister()
+
+
 if __name__ == '__main__':
     unittest.main()
