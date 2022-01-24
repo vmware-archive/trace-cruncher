@@ -232,6 +232,26 @@ static PyMethodDef PySynthEvent_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Add fields from the end event to save."
 	},
+	{"add_delta_start",
+	 (PyCFunction) PySynthEvent_add_delta_start,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add 'start - end' field."
+	},
+	{"add_delta_end",
+	 (PyCFunction) PySynthEvent_add_delta_end,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add 'end - start' field."
+	},
+	{"add_delta_T",
+	 (PyCFunction) PySynthEvent_add_delta_T,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add time-difference field."
+	},
+	{"add_sum",
+	 (PyCFunction) PySynthEvent_add_delta_T,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add 'start + end' field."
+	},
 	{NULL, NULL, 0, NULL}
 };
 

@@ -1073,6 +1073,87 @@ PyObject *PySynthEvent_add_end_fields(PySynthEvent *self, PyObject *args,
 	return synth_add_fields(self, args, kwargs, false);
 }
 
+static inline void add_synth_field_err(const char *field, const char *event)
+{
+	TfsError_fmt(NULL, "Failed to add field '%s' to synth. event %s",
+		     field, event);
+}
+
+static inline PyObject *
+add_synth_field(PySynthEvent *self, PyObject *args, PyObject *kwargs,
+		enum tracefs_synth_calc calc)
+{
+	static char *kwlist[] = {"name", "start_field", "end_field", NULL};
+	const char *start_field, *end_field, *name;
+	int ret;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "sss",
+					 kwlist,
+					 &name,
+					 &start_field,
+					 &end_field)) {
+		return NULL;
+	}
+
+	ret = tracefs_synth_add_compare_field(self->ptrObj,
+					      start_field, end_field, calc,
+					      name);
+	if (ret < 0) {
+		add_synth_field_err(name, tracefs_synth_get_name(self->ptrObj));
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
+PyObject *PySynthEvent_add_delta_start(PySynthEvent *self, PyObject *args,
+							   PyObject *kwargs)
+{
+	return add_synth_field(self, args, kwargs, TRACEFS_SYNTH_DELTA_START);
+}
+
+PyObject *PySynthEvent_add_delta_end(PySynthEvent *self, PyObject *args,
+							 PyObject *kwargs)
+{
+	return add_synth_field(self, args, kwargs, TRACEFS_SYNTH_DELTA_END);
+}
+
+PyObject *PySynthEvent_add_sum(PySynthEvent *self, PyObject *args,
+						   PyObject *kwargs)
+{
+	return add_synth_field(self, args, kwargs, TRACEFS_SYNTH_ADD);
+}
+
+PyObject *PySynthEvent_add_delta_T(PySynthEvent *self, PyObject *args,
+						       PyObject *kwargs)
+{
+	static char *kwlist[] = {"name", "hd", NULL};
+	const char *name = "delta_T";
+	const char* time_rez;
+	int ret, hd = 0;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|sp",
+					 kwlist,
+					 &name,
+					 &hd)) {
+		return NULL;
+	}
+
+	time_rez = hd ? TRACEFS_TIMESTAMP : TRACEFS_TIMESTAMP_USECS;
+	ret = tracefs_synth_add_compare_field(self->ptrObj, time_rez, time_rez,
+					      TRACEFS_SYNTH_DELTA_END, name);
+	if (ret < 0) {
+		add_synth_field_err(name, tracefs_synth_get_name(self->ptrObj));
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
+}
+
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());
