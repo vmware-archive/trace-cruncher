@@ -450,6 +450,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_NOARGS,
 	 "Get the name of the event system used by trace-cruncher."
 	},
+	{"no_arg",
+	 (PyCFunction) PyFtrace_no_arg,
+	 METH_NOARGS,
+	 "Returns a default value for an optional function argument."
+	},
 	{"kprobe",
 	 (PyCFunction) PyFtrace_kprobe,
 	 METH_VARARGS | METH_KEYWORDS,

@@ -245,6 +245,8 @@ PyObject *PyFtrace_enabled_options(PyObject *self, PyObject *args,
 
 PyObject *PyFtrace_tc_event_system(PyObject *self);
 
+PyObject *PyFtrace_no_arg(PyObject *self);
+
 PyObject *PyFtrace_kprobe(PyObject *self, PyObject *args, PyObject *kwargs);
 
 PyObject *PyFtrace_kretprobe(PyObject *self, PyObject *args, PyObject *kwargs);

@@ -2178,6 +2178,11 @@ PyObject *PyFtrace_tc_event_system(PyObject *self)
 	return PyUnicode_FromString(TC_SYS);
 }
 
+PyObject *PyFtrace_no_arg(PyObject *self)
+{
+	return PyUnicode_FromString(NO_ARG);
+}
+
 static PyObject *dynevent_info2py(char *buff, int type)
 {
 	PyObject *ret;

@@ -55,45 +55,30 @@ class event:
         """
         return int(self.evt_id)
 
-    def enable(self, instance=None):
+    def enable(self, instance=ft.no_arg()):
         """ Enable this event.
         """
-        if instance is None:
-            ft.enable_event(system=self.system, event=self.name)
-        else:
-            ft.enable_event(instance=instance, system=self.system, event=self.name)
+        ft.enable_event(instance=instance, system=self.system, event=self.name)
 
-    def disable(self, instance=None):
+    def disable(self, instance=ft.no_arg()):
         """ Disable this event.
         """
-        if instance is None:
-            ft.disable_event(system=self.system, event=self.name)
-        else:
-            ft.disable_event(instance=instance,system=self.system, event=self.name)
+        ft.disable_event(instance=instance,system=self.system, event=self.name)
 
-    def set_filter(self, filter, instance=None):
+    def set_filter(self, filter, instance=ft.no_arg()):
         """ Define a filter for this event.
         """
-        if instance is None:
-            ft.set_event_filter(system=self.system,
-                                event=self.name,
-                                filter=filter)
-        else:
-            ft.set_event_filter(instance=instance,
-                                system=self.system,
-                                event=self.name,
-                                filter=filter)
+        ft.set_event_filter(instance=instance,
+                            system=self.system,
+                            event=self.name,
+                            filter=filter)
 
-    def clear_filter(self, instance=None):
+    def clear_filter(self, instance=ft.no_arg()):
         """ Define the filter for this event.
         """
-        if instance is None:
-            ft.clear_event_filter(system=self.system,
-                                  event=self.name)
-        else:
-            ft.clear_event_filter(instance=instance,
-                                  system=self.system,
-                                  event=self.name)
+        ft.clear_event_filter(instance=instance,
+                              system=self.system,
+                              event=self.name)
 
 
 class kprobe_base(event):
