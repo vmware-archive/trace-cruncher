@@ -43,7 +43,6 @@ class event:
         """
         self.system = system
         self.name = name
-        self.instance_list = []
         if static:
             self.evt_id = find_event_id(system, name)
             if self.evt_id < 0:
@@ -61,22 +60,16 @@ class event:
         """
         if instance is None:
             ft.enable_event(system=self.system, event=self.name)
-            self.instance_list.append('top')
         else:
             ft.enable_event(instance=instance, system=self.system, event=self.name)
-            self.instance_list.append(instance)
-
-        self.instance_list = list(set(self.instance_list))
 
     def disable(self, instance=None):
         """ Disable this event.
         """
         if instance is None:
             ft.disable_event(system=self.system, event=self.name)
-            self.instance_list.remove('top')
         else:
             ft.disable_event(instance=instance,system=self.system, event=self.name)
-            self.instance_list.remove(instance)
 
     def set_filter(self, filter, instance=None):
         """ Define a filter for this event.
