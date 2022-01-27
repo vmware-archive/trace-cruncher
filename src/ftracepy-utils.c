@@ -2229,8 +2229,7 @@ PyObject *PyDynevent_probe(PyDynevent *self)
 	return dynevent_info2py(buff, type);
 }
 
-PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
-						   PyObject *kwargs)
+PyObject *PyFtrace_kprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	static char *kwlist[] = {"event", "function", "probe", NULL};
 	const char *event, *function, *probe;
@@ -2261,8 +2260,7 @@ PyObject *PyFtrace_register_kprobe(PyObject *self, PyObject *args,
 	return PyDynevent_New(kprobe);
 }
 
-PyObject *PyFtrace_register_kretprobe(PyObject *self, PyObject *args,
-						      PyObject *kwargs)
+PyObject *PyFtrace_kretprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	static char *kwlist[] = {"event", "function", "probe", NULL};
 	const char *event, *function, *probe = "$retval";

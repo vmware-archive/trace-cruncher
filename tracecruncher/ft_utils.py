@@ -178,7 +178,7 @@ class kprobe(kprobe_base):
         """
         probe = ' '.join('{!s}={!s}'.format(key,val) for (key, val) in self.fields.items())
 
-        self.kp = ft.register_kprobe(event=self.name, function=self.func, probe=probe);
+        self.kp = ft.kprobe(event=self.name, function=self.func, probe=probe);
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
 
 
@@ -208,7 +208,7 @@ class kretval_probe(kprobe_base):
     def register(self):
         """ Register this probe to Ftrace.
         """
-        self.kp = ft.register_kprobe(event=self.name, function=self.func);
+        self.kp = ft.kprobe(event=self.name, function=self.func);
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
 
 
