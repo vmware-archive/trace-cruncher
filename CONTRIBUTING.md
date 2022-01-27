@@ -20,6 +20,15 @@ The preferred coding style for the project is the [Linux kernel coding style](ht
 The project follows the conventions for [submitting patches](https://www.kernel.org/doc/html/v5.4/process/submitting-patches.html)
 as described by the Linux kernel.
 
+### Tests
+
+Make sure that all your changes are covered by the tests. Before submitting your patch, check if everything works at 100% by running the tests in **tracecruncher/tests**. Compile your changes and install trace-cruncher (`sudo make install`), to make sure that your code is used in the tests. As trace-cruncher interacts with the Linux kernel tracing infrastructure, the tests must be run with root privileges:
+
+``` shell
+cd tracecruncher/tests
+sudo python3 -m unittest discover .
+```
+
 ## Reporting Bugs and Creating Issues
 For bug reports and issues, please file it [bugzilla](https://bugzilla.kernel.org/buglist.cgi?component=Trace-cmd%2FKernelshark&product=Tools&resolution=---)
 
