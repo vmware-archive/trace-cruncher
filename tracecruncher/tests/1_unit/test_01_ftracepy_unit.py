@@ -14,6 +14,7 @@ import tracecruncher.ft_utils as tc
 
 instance_name = 'test_instance1'
 another_instance_name = 'test_instance2'
+kernel_version = tuple(map(int, (os.uname()[2].split('.')[:2])))
 
 class InstanceTestCase(unittest.TestCase):
     def test_dir(self):
@@ -457,6 +458,55 @@ class KprobeTestCase(unittest.TestCase):
         ret = kp1.is_enabled(instance=inst)
         self.assertEqual(ret, '0')
 
+class EprobeTestCase(unittest.TestCase):
+    def test_eprobe(self):
+        """ Event probes are introduced in Linux kernel 5.15
+        """
+        if kernel_version < (5, 15):
+            return
+
+        evt1 = 'sopen_in'
+        evt1_tsys = 'syscalls'
+        evt1_tevent = 'sys_enter_openat'
+        evt1_args = 'file=+0($filename):ustring'
+        evt2 = 'sopen_out'
+        evt2_tsys = 'syscalls'
+        evt2_tevent = 'sys_exit_openat'
+        evt2_args = 'res=$ret:u64'
+
+        ep1 = ft.eprobe(event=evt1, target_system=evt1_tsys, target_event=evt1_tevent,
+                        fetchargs=evt1_args)
+        self.assertEqual(evt1, ep1.event())
+        self.assertEqual("{}.{}".format(evt1_tsys, evt1_tevent), ep1.address())
+        self.assertEqual(evt1_args, ep1.probe())
+
+        ep2 = ft.eprobe(event=evt2, target_system=evt2_tsys, target_event=evt2_tevent,
+                        fetchargs=evt2_args)
+        self.assertEqual(evt2, ep2.event())
+        self.assertEqual("{}.{}".format(evt2_tsys, evt2_tevent), ep2.address())
+        self.assertEqual(evt2_args, ep2.probe())
+
+    def test_enable_eprobe(self):
+        """ Event probes are introduced in Linux kernel 5.15
+        """
+        if kernel_version < (5, 15):
+            return
+
+        evt1 = 'sopen_out'
+        evt1_tsys = 'syscalls'
+        evt1_tevent = 'sys_exit_openat'
+        evt1_args = 'res=$ret:u64'
+
+        ep1 = ft.eprobe(event=evt1, target_system=evt1_tsys, target_event=evt1_tevent,
+                        fetchargs=evt1_args)
+        inst = ft.create_instance(instance_name)
+        ep1.enable(instance=inst)
+        ret = ep1.is_enabled(instance=inst)
+        self.assertEqual(ret, '1')
+
+        ep1.disable(instance=inst)
+        ret = ep1.is_enabled(instance=inst)
+        self.assertEqual(ret, '0')
 
 class TracingOnTestCase(unittest.TestCase):
     def test_ON_OF(self):
