@@ -2315,6 +2315,38 @@ struct tep_event *dynevent_get_event(PyDynevent *event,
 	return tep_evt;
 }
 
+PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	static char *kwlist[] = {"event", "target_system", "target_event", "fetchargs", NULL};
+	const char *event, *target_system, *target_event, *fetchargs;
+	struct tracefs_dynevent *eprobe;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "ssss",
+					 kwlist,
+					 &event,
+					 &target_system,
+					 &target_event,
+					 &fetchargs)) {
+		return NULL;
+	}
+
+	eprobe = tracefs_eprobe_alloc(TC_SYS, event, target_system, target_event, fetchargs);
+	if (!eprobe) {
+		MEM_ERROR;
+		return NULL;
+	}
+
+	if (tracefs_dynevent_create(eprobe) < 0) {
+		TfsError_fmt(NULL, "Failed to create eprobe '%s'", event);
+		tracefs_dynevent_free(eprobe);
+		return NULL;
+	}
+
+	return PyDynevent_New(eprobe);
+}
+
 static PyObject *set_filter(PyObject *args, PyObject *kwargs,
 			    struct tep_handle *tep,
 			    struct tep_event *event)
