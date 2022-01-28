@@ -1,0 +1,11 @@
+*.so
+*.a
+.*.d
+*~
+*.pyc
+*.swp
+build/
+tracecruncher.egg-info/
+dist/
+src/npdatawrapper.c
+install_manifest.txt
