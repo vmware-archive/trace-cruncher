@@ -76,6 +76,10 @@ PyObject *PyDynevent_address(PyDynevent *self);
 
 PyObject *PyDynevent_probe(PyDynevent *self);
 
+PyObject *PyDynevent_register(PyDynevent *self);
+
+PyObject *PyDynevent_unregister(PyDynevent *self);
+
 PyObject *PyDynevent_set_filter(PyDynevent *self, PyObject *args,
 					      PyObject *kwargs);
 

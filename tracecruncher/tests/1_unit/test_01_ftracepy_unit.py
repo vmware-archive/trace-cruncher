@@ -414,11 +414,13 @@ class KprobeTestCase(unittest.TestCase):
         evt2_prove = 'file=+u0($arg2):ustring'
 
         kp1 = ft.kprobe(event=evt1, function=evt1_func, probe=evt1_prove)
+        kp1.register()
         self.assertEqual(evt1, kp1.event())
         self.assertEqual(evt1_func, kp1.address())
         self.assertEqual(evt1_prove, kp1.probe())
 
         kp2 = ft.kprobe(event=evt2, function=evt2_func, probe=evt2_prove)
+        kp2.register()
         self.assertEqual(evt2, kp2.event())
         self.assertEqual(evt2_func, kp2.address())
         self.assertEqual(evt2_prove, kp2.probe())
@@ -430,6 +432,7 @@ class KprobeTestCase(unittest.TestCase):
         flt = 'path~\'/sys/fs/cgroup/*\''
 
         kp1 = ft.kprobe(event=evt1, function=evt1_func, probe=evt1_prove)
+        kp1.register()
         inst = ft.create_instance(instance_name)
 
         kp1.set_filter(instance=inst, filter=flt)
@@ -445,6 +448,7 @@ class KprobeTestCase(unittest.TestCase):
         evt1_prove = 'path=+u0($arg2):ustring'
 
         kp1 = ft.kprobe(event=evt1, function=evt1_func, probe=evt1_prove)
+        kp1.register()
         inst = ft.create_instance(instance_name)
         kp1.enable(instance=inst)
         ret = kp1.is_enabled(instance=inst)
@@ -458,8 +462,6 @@ class EprobeTestCase(unittest.TestCase):
     def test_eprobe(self):
         """ Event probes are introduced in Linux kernel 5.15
         """
-        if kernel_version < (5, 15):
-            return
 
         evt1 = 'sopen_in'
         evt1_tsys = 'syscalls'
@@ -495,6 +497,7 @@ class EprobeTestCase(unittest.TestCase):
 
         ep1 = ft.eprobe(event=evt1, target_system=evt1_tsys, target_event=evt1_tevent,
                         fetchargs=evt1_args)
+        ep1.register()
         inst = ft.create_instance(instance_name)
         ep1.enable(instance=inst)
         ret = ep1.is_enabled(instance=inst)

@@ -127,6 +127,16 @@ static PyMethodDef PyDynevent_methods[] = {
 	 METH_NOARGS,
 	 "Get the event definition."
 	},
+	{"register",
+	 (PyCFunction) PyDynevent_register,
+	 METH_NOARGS,
+	 "Register dynamic event."
+	},
+	{"unregister",
+	 (PyCFunction) PyDynevent_unregister,
+	 METH_NOARGS,
+	 "Unregister dynamic event."
+	},
 	{"set_filter",
 	 (PyCFunction) PyDynevent_set_filter,
 	 METH_VARARGS | METH_KEYWORDS,
@@ -164,6 +174,7 @@ static int dynevent_destroy(struct tracefs_dynevent *devt)
 {
 	return tracefs_dynevent_destroy(devt, true);
 }
+
 C_OBJECT_WRAPPER(tracefs_dynevent, PyDynevent,
 		 dynevent_destroy,
 		 tracefs_dynevent_free)
@@ -255,12 +266,12 @@ static PyMethodDef PySynthEvent_methods[] = {
 	{"register",
 	 (PyCFunction) PySynthEvent_register,
 	 METH_NOARGS,
-	 "Register synth. event to a trace instance."
+	 "Register synth. event."
 	},
 	{"unregister",
 	 (PyCFunction) PySynthEvent_unregister,
 	 METH_NOARGS,
-	 "Unregister synth. event from a trace instance."
+	 "Unregister synth. event."
 	},
 	{"enable",
 	 (PyCFunction) PySynthEvent_enable,

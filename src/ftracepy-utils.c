@@ -2234,11 +2234,54 @@ PyObject *PyDynevent_probe(PyDynevent *self)
 	return dynevent_info2py(buff, type);
 }
 
+PyObject *PyDynevent_register(PyDynevent *self)
+{
+	if (tracefs_dynevent_create(self->ptrObj) < 0) {
+		char *evt;
+		int type;
+
+		type = tracefs_dynevent_info(self->ptrObj, NULL, &evt, NULL, NULL, NULL);
+		TfsError_fmt(NULL, "Failed to register dynamic event '%s'.",
+		type != TRACEFS_DYNEVENT_UNKNOWN ? evt : "UNKNOWN");
+		free(evt);
+		return NULL;
+	}
+
+	/*
+	 * Here the dynamic event gets added to the system.
+	 * Hence we need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag((PyObject *)self, true);
+	Py_RETURN_NONE;
+}
+
+PyObject *PyDynevent_unregister(PyDynevent *self)
+{
+	if (tracefs_dynevent_destroy(self->ptrObj, true) < 0) {
+		char *evt;
+		int type;
+
+		type = tracefs_dynevent_info(self->ptrObj, NULL, &evt, NULL, NULL, NULL);
+		TfsError_fmt(NULL, "Failed to unregister dynamic event '%s'.",
+		type != TRACEFS_DYNEVENT_UNKNOWN ? evt : "UNKNOWN");
+		free(evt);
+		return NULL;
+	}
+
+	/*
+	 * Here the synthetic event gets removed from the system.
+	 * Hence we no loger need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag((PyObject *)self, false);
+	Py_RETURN_NONE;
+}
+
 PyObject *PyFtrace_kprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	static char *kwlist[] = {"event", "function", "probe", NULL};
 	const char *event, *function, *probe;
 	struct tracefs_dynevent *kprobe;
+	PyObject *py_dyn;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
@@ -2256,13 +2299,14 @@ PyObject *PyFtrace_kprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
-	if (tracefs_dynevent_create(kprobe) < 0) {
-		TfsError_fmt(NULL, "Failed to create kprobe '%s'", event);
-		tracefs_dynevent_free(kprobe);
-		return NULL;
-	}
-
-	return PyDynevent_New(kprobe);
+	py_dyn = PyDynevent_New(kprobe);
+	/*
+	 * Here we only allocated and initializes a dynamic event object.
+	 * However, no dynamic event is added to the system yet. Hence,
+	 * there is no need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag(py_dyn, false);
+	return py_dyn;
 }
 
 PyObject *PyFtrace_kretprobe(PyObject *self, PyObject *args, PyObject *kwargs)
@@ -2270,6 +2314,7 @@ PyObject *PyFtrace_kretprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 	static char *kwlist[] = {"event", "function", "probe", NULL};
 	const char *event, *function, *probe = "$retval";
 	struct tracefs_dynevent *kprobe;
+	PyObject *py_dyn;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
@@ -2287,13 +2332,14 @@ PyObject *PyFtrace_kretprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
-	if (tracefs_dynevent_create(kprobe) < 0) {
-		TfsError_fmt(NULL, "Failed to create kretprobe '%s'", event);
-		tracefs_dynevent_free(kprobe);
-		return NULL;
-	}
-
-	return PyDynevent_New(kprobe);
+	py_dyn = PyDynevent_New(kprobe);
+	/*
+	 * Here we only allocated and initializes a dynamic event object.
+	 * However, no dynamic event is added to the system yet. Hence,
+	 * there is no need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag(py_dyn, false);
+	return py_dyn;
 }
 
 struct tep_event *dynevent_get_event(PyDynevent *event,
@@ -2323,6 +2369,7 @@ PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 	static char *kwlist[] = {"event", "target_system", "target_event", "fetchargs", NULL};
 	const char *event, *target_system, *target_event, *fetchargs;
 	struct tracefs_dynevent *eprobe;
+	PyObject *py_dyn;
 
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
@@ -2341,13 +2388,14 @@ PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
-	if (tracefs_dynevent_create(eprobe) < 0) {
-		TfsError_fmt(NULL, "Failed to create eprobe '%s'", event);
-		tracefs_dynevent_free(eprobe);
-		return NULL;
-	}
-
-	return PyDynevent_New(eprobe);
+	py_dyn = PyDynevent_New(eprobe);
+	/*
+	 * Here we only allocated and initializes a dynamic event object.
+	 * However, no dynamic event is added to the system yet. Hence,
+	 * there is no need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag(py_dyn, false);
+	return py_dyn;;
 }
 
 static PyObject *set_filter(PyObject *args, PyObject *kwargs,
