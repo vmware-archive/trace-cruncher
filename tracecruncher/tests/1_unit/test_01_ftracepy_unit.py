@@ -825,6 +825,61 @@ class SyntTestCase(unittest.TestCase):
         self.assertEqual('none', synth.get_filter())
         synth.unregister()
 
+swaking = tc.event('sched', 'sched_waking')
+sswitch = tc.event('sched', 'sched_switch')
+
+class SyntTestCase(unittest.TestCase):
+    def test_synt_create(self):
+        start = tc.ksynth_event_item(event=swaking,
+                                     fields=['target_cpu', 'prio'],
+                                     match='pid')
+        self.assertEqual(start['fields'], ['target_cpu', 'prio'])
+        self.assertEqual(start['match'], 'pid')
+        self.assertEqual(start['field_names'], [None, None])
+
+        start = tc.ksynth_field_rename(start,
+                                       field='target_cpu', name='cpu')
+        self.assertEqual(start['field_names'], ['cpu', None])
+
+        end = tc.ksynth_event_item(event=sswitch,
+                                   fields=['prev_prio'],
+                                   match='next_pid')
+        self.assertEqual(end['fields'], ['prev_prio'])
+        self.assertEqual(end['match'], 'next_pid')
+
+        synth = tc.ksynth(name='synth_wakeup',
+                          start_event=start, end_event=end,
+                          synth_fields=[tc.ksynth_field_deltaT(hd=True)],
+                          match_name='pid')
+
+        synth_str = synth.__repr__().split('\n')
+        event = synth_str[0]
+        hist_s = synth_str[1]
+        hist_e = synth_str[2]
+
+        self.assertTrue('keys=pid'in hist_s)
+        self.assertTrue('keys=next_pid' in hist_e)
+        self.assertTrue('pid=next_pid' in hist_e)
+        self.assertTrue('onmatch(sched.sched_waking).trace(synth_wakeup,$pid' in hist_e)
+        self.assertTrue('s32 cpu;' in event)
+        self.assertTrue('s32 prio;' in event)
+        split_1 = hist_s.split('__arg_')
+        arg1 = '__arg_' + split_1[1].split('=')[0]
+        arg2 = '__arg_' + split_1[2].split('=')[0]
+        self.assertTrue(arg1 + '=target_cpu' in hist_s)
+        self.assertTrue(arg2 + '=prio' in hist_s)
+        self.assertTrue('cpu=$' + arg1 in hist_e)
+        self.assertTrue('prio=$' + arg2 in hist_e)
+        split_2 = hist_e.split('trace(')
+        self.assertTrue('$pid' in split_2[1])
+        self.assertTrue('$prio' in split_2[1])
+        self.assertTrue('s32 prev_prio;' in event)
+        split_3 = hist_e.split('__arg_')
+        arg3 = '__arg_' + split_3[3].split('=')[0]
+        self.assertTrue(arg3 + '=prev_prio' in hist_e)
+        split_4 = hist_e.split('trace(')
+        self.assertTrue('$' + arg3 in split_4[1])
+
 
 if __name__ == '__main__':
     unittest.main()
