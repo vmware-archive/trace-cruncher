@@ -314,3 +314,122 @@ def find_khist(name, event, axes, instance=None,
         raise RuntimeError(msg) from err
 
     return hist
+
+class ksynth(event):
+    def __init__(self, name, start_event, end_event,
+                 synth_fields=None, match_name=ft.no_arg()):
+        """ Constructor.
+        """
+        super().__init__(system='synthetic', name=name, static=False)
+        self.synth = ft.synth(name,
+                              start_sys=start_event['event'].system,
+                              start_evt=start_event['event'].name,
+                              end_sys=end_event['event'].system,
+                              end_evt=end_event['event'].name,
+                              start_match=start_event['match'],
+                              end_match=end_event['match'],
+                              match_name=match_name)
+
+        start_fields = end_fields = []
+
+        if 'fields' in start_event:
+            start_fields = start_event['fields']
+
+        start_field_names = [None] * len(start_fields)
+        if 'field_names' in start_event:
+            start_field_names = start_event['field_names']
+
+        self.synth.add_start_fields(fields=start_fields,
+                                    names=start_field_names)
+
+        if 'fields' in end_event:
+            end_fields = end_event['fields']
+
+        end_field_names = [None] * len(end_fields)
+        if 'field_names' in end_event:
+            end_field_names = end_event['field_names']
+
+        self.synth.add_end_fields(fields=end_fields,
+                                  names=end_field_names)
+
+        if synth_fields is not None:
+            for f in synth_fields:
+                args = f.split(' ')
+                if args[0] == 'delta_t' and len(args) < 4:
+                    if len(args) == 1:
+                        self.synth.add_delta_T()
+                    elif len(args) == 3 and args[2] == 'hd':
+                        self.synth.add_delta_T(name=args[1], hd=True)
+                    elif args[1] == 'hd':
+                        self.synth.add_delta_T(hd=True)
+                    else:
+                        self.synth.add_delta_T(name=args[1])
+                elif args[0] == 'delta_start' and len(args) == 4:
+                    self.synth.add_delta_start(name=args[1],
+                                               start_field=args[2],
+                                               end_field=args[3])
+                elif args[0] == 'delta_end' and len(args) == 4:
+                    self.synth.add_delta_end(name=args[1],
+                                             start_field=args[2],
+                                             end_field=args[3])
+                elif args[0] == 'delta_start' and len(args) == 3:
+                    self.synth.add_sum(start_field=args[1], end_field=args[2])
+                else:
+                    raise ValueError('Invalid synth. field \'{0}\''.format(f))
+
+        self.synth.register()
+        self.evt_id = find_event_id(system=self.system, event=self.name)
+
+    def __repr__(self):
+        """ Read the descriptor of the synthetic event.
+        """
+        return self.synth.repr(event=True, hist_start=True, hist_end=True)
+
+
+def ksynth_event_item(event, match, fields=[]):
+    """ Create descriptor for an event item (component) of a synthetic event.
+        To be used as a start/end event.
+    """
+    sub_evt = {}
+    sub_evt['event'] = event
+    sub_evt['fields'] = fields
+    sub_evt['field_names'] = [None] * len(fields)
+    sub_evt['match'] = match
+
+    return sub_evt
+
+
+def ksynth_field_rename(event, field, name):
+    """ Change the name of a field in the event component of a synthetic event.
+    """
+    pos = event['fields'].index(field)
+    event['field_names'][pos] = name
+
+    return event
+
+
+def ksynth_field_deltaT(name='delta_T', hd=False):
+    """ Create descriptor for time-diference synthetic field.
+    """
+    if hd:
+        return 'delta_t {0} hd'.format(name)
+
+    return 'delta_t {0} hd'.format(name)
+
+
+def ksynth_field_delta_start(name, start_field, end_field):
+    """ Create descriptor for field diference (start - end) synthetic field.
+    """
+    return 'delta_start {0} {1} {2}'.format(name, start_field, end_field)
+
+
+def ksynth_field_delta_end(name, start_field, end_field):
+    """ Create descriptor for field diference (end - start)  synthetic field.
+    """
+    return 'delta_end {0} {1} {2}'.format(name, start_field, end_field)
+
+
+def ksynth_field_sum(name, start_field, end_field):
+    """ Create descriptor for field sum synthetic field.
+    """
+    return 'sum {0} {1} {2}'.format(name, start_field, end_field)
