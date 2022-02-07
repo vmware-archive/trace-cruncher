@@ -14,8 +14,8 @@ from . import ftracepy as ft
 def local_tep():
     """ Get the "tep" event of the current system (local).
     """
-    tep = ft.tep_handle();
-    tep.init_local(dir=ft.dir());
+    tep = ft.tep_handle()
+    tep.init_local(dir=ft.dir())
 
     return tep
 
@@ -23,8 +23,8 @@ def local_tep():
 def find_event_id(system, event):
     """ Get the unique identifier of a trace event.
     """
-    tep = ft.tep_handle();
-    tep.init_local(dir=ft.dir(), systems=[system]);
+    tep = ft.tep_handle()
+    tep.init_local(dir=ft.dir(), systems=[system])
 
     return tep.get_event(system=system, name=event).id()
 
@@ -51,7 +51,7 @@ class event:
             self.evt_id = -1
 
     def id(self):
-        """ Retrieve the unique ID of the kprobe event.
+        """ Retrieve the unique ID of the event.
         """
         return int(self.evt_id)
 
@@ -74,7 +74,7 @@ class event:
                             filter=filter)
 
     def clear_filter(self, instance=ft.no_arg()):
-        """ Define the filter for this event.
+        """ Clear the filter for this event.
         """
         ft.clear_event_filter(instance=instance,
                               system=self.system,
@@ -120,7 +120,7 @@ class kprobe(kprobe_base):
         self.add_raw_field(name, probe)
 
     def add_array_arg(self, name, param_id, param_type, offset=0, size=-1):
-        """ Add a array parameter data field to this probe.
+        """ Add an array function parameter data field to this probe.
         """
         if size < 0:
             size = 10
@@ -133,7 +133,7 @@ class kprobe(kprobe_base):
             self.add_raw_field(field_name, probe)
 
     def add_string_arg(self, name, param_id, offset=0, usr_space=False):
-        """ Add a pointer function parameter data field to this probe.
+        """ Add a string function parameter data field to this probe.
         """
         p_type = 'ustring' if usr_space else 'string'
         self.add_ptr_arg(name=name,
@@ -142,7 +142,7 @@ class kprobe(kprobe_base):
                          offset=offset)
 
     def add_string_array_arg(self, name, param_id, offset=0, usr_space=False, size=-1):
-        """ Add a string array parameter data field to this probe.
+        """ Add a string array function parameter data field to this probe.
         """
         p_type = 'ustring' if usr_space else 'string'
         self.add_array_arg(name=name,
@@ -156,13 +156,13 @@ class kprobe(kprobe_base):
         """
         probe = ' '.join('{!s}={!s}'.format(key,val) for (key, val) in self.fields.items())
 
-        self.kp = ft.kprobe(event=self.name, function=self.func, probe=probe);
-        self.kp.register();
+        self.kp = ft.kprobe(event=self.name, function=self.func, probe=probe)
+        self.kp.register()
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
 
 
 def parse_record_array_field(event, record, field, size=-1):
-    """ Register this probe to Ftrace.
+    """ Parse the content of an array function parameter data field.
     """
     if size < 0:
         size = 10
@@ -187,8 +187,8 @@ class kretval_probe(kprobe_base):
     def register(self):
         """ Register this probe to Ftrace.
         """
-        self.kp = ft.kprobe(event=self.name, function=self.func);
-        self.kp.register();
+        self.kp = ft.kprobe(event=self.name, function=self.func)
+        self.kp.register()
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
 
 
@@ -200,7 +200,7 @@ class khist:
         self.name = name
         self.inst = None
 
-        inst_name = name+'_inst'
+        inst_name = name + '_inst'
         if find:
             self.inst = ft.find_instance(name=inst_name)
             self.attached = False
