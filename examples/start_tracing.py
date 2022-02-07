@@ -11,7 +11,8 @@ import tracecruncher.ftracepy as ft
 # Create new Ftrace instance to work in.
 inst = ft.create_instance()
 
-# Enable all static events from systems "sched" and "irq".
+# Enable several static events, including "sched_switch" and "sched_waking"
+# from systems "sched" and all events from system "irq".
 ft.enable_events(instance=inst,
                  events={'sched': ['sched_switch', 'sched_waking'],
                          'irq':   ['all']})
