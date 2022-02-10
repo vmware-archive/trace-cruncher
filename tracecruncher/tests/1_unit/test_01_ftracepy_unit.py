@@ -473,13 +473,13 @@ class EprobeTestCase(unittest.TestCase):
         evt2_args = 'res=$ret:u64'
 
         ep1 = ft.eprobe(event=evt1, target_system=evt1_tsys, target_event=evt1_tevent,
-                        fetchargs=evt1_args)
+                        fetch_fields=evt1_args)
         self.assertEqual(evt1, ep1.event())
         self.assertEqual("{}.{}".format(evt1_tsys, evt1_tevent), ep1.address())
         self.assertEqual(evt1_args, ep1.probe())
 
         ep2 = ft.eprobe(event=evt2, target_system=evt2_tsys, target_event=evt2_tevent,
-                        fetchargs=evt2_args)
+                        fetch_fields=evt2_args)
         self.assertEqual(evt2, ep2.event())
         self.assertEqual("{}.{}".format(evt2_tsys, evt2_tevent), ep2.address())
         self.assertEqual(evt2_args, ep2.probe())
@@ -496,7 +496,7 @@ class EprobeTestCase(unittest.TestCase):
         evt1_args = 'res=$ret:u64'
 
         ep1 = ft.eprobe(event=evt1, target_system=evt1_tsys, target_event=evt1_tevent,
-                        fetchargs=evt1_args)
+                        fetch_fields=evt1_args)
         ep1.register()
         inst = ft.create_instance(instance_name)
         ep1.enable(instance=inst)

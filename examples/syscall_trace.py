@@ -24,7 +24,7 @@ args = 'file=+0($file):ustring delta_T=$delta_T:s64'
 
 eprobe = ft.eprobe(event=eprobe_evt,
                    target_system='synthetic', target_event=synth_evt,
-                   fetchargs=args)
+                   fetch_fields=args)
 
 synth = ft.synth(name=synth_evt,
                  start_sys='syscalls', start_evt='sys_enter_' + syscall,

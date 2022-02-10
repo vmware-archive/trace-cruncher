@@ -2366,7 +2366,7 @@ struct tep_event *dynevent_get_event(PyDynevent *event,
 
 PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	static char *kwlist[] = {"event", "target_system", "target_event", "fetchargs", NULL};
+	static char *kwlist[] = {"event", "target_system", "target_event", "fetch_fields", NULL};
 	const char *event, *target_system, *target_event, *fetchargs;
 	struct tracefs_dynevent *eprobe;
 	PyObject *py_dyn;
