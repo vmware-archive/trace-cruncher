@@ -357,6 +357,8 @@ class tc_synth(tc_event):
             for f in synth_fields:
                 args = f.split(' ')
                 if args[0] == 'delta_t' and len(args) < 4:
+                    # The expected format is: 'delta_t [name] hd'.
+                    # Arguments 1 and 2 are optional.
                     if len(args) == 1:
                         self.synth.add_delta_T()
                     elif len(args) == 3 and args[2] == 'hd':
@@ -366,15 +368,26 @@ class tc_synth(tc_event):
                     else:
                         self.synth.add_delta_T(name=args[1])
                 elif args[0] == 'delta_start' and len(args) == 4:
+                    # The expected format is:
+                    # 'delta_start [name] [start_field] [end_field]'.
                     self.synth.add_delta_start(name=args[1],
                                                start_field=args[2],
                                                end_field=args[3])
+
                 elif args[0] == 'delta_end' and len(args) == 4:
+                    # The expected format is:
+                    # 'delta_end [name] [start_field] [end_field]'.
                     self.synth.add_delta_end(name=args[1],
                                              start_field=args[2],
                                              end_field=args[3])
-                elif args[0] == 'delta_start' and len(args) == 3:
-                    self.synth.add_sum(start_field=args[1], end_field=args[2])
+
+                elif args[0] == 'sun' and len(args) == 4:
+                    # The expected format is:
+                    # 'sum [name] [start_field] [end_field]'.
+                    self.synth.add_sum(name=args[1],
+                                       start_field=args[2],
+                                       end_field=args[3])
+
                 else:
                     raise ValueError('Invalid synth. field \'{0}\''.format(f))
 
