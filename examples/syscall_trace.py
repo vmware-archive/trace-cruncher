@@ -19,7 +19,7 @@ args = 'file=+0($file):ustring delta_T=$delta_T:s64'
 # In order to trace a system call, we will create a synthetic event that
 # combines the 'sys_enter_XXX' and 'sys_exit_XXX' static events. A dynamic
 # 'eprobe' will be attached to this synthetic event in order to decode the
-# pointer argument of the system and to calculate the time spend between
+# pointer argument of the system call and to calculate the time spent between
 # 'sys_enter_XXX' and 'sys_exit_XXX' (syscall duration).
 
 eprobe = ft.eprobe(event=eprobe_evt,

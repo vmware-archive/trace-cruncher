@@ -12,18 +12,26 @@ import time
 import tracecruncher.ft_utils as tc
 
 name = 'khist_example_oop'
-
 cmds = ['start', 'stop', 'show', 'continue', 'clear', 'close']
 
+# From the event 'kmalloc' in system 'kmem', create a two-dimensional
+# histogram, using the event fields 'call_site' and 'bytes_req'.
+# The field 'call_site' will be displayed as a kernel symbol.
+# The field 'bytes_req' will be displayed as normal field (wothout
+# modifying the type).
 evt = tc.tc_event('kmem', 'kmalloc')
-
 axes={'call_site': 'sym',
       'bytes_req': 'n'}
 
+# Instead of just recording the "hitcount" in each bin of the histogram,
+# we will use the 'value' of 'bytes_alloc' as a weight of the individual
+# histogram entries (events).
 weights=['bytes_alloc']
 
+# The results will be ordered using 'bytes_req' as a primary and
+# 'bytes_alloc' as a secondary sorting criteria. For 'bytes_req' we will
+# use descending order.
 sort_keys=['bytes_req', 'bytes_alloc']
-
 sort_dir={'bytes_req': 'desc'}
 
 if __name__ == "__main__":
