@@ -425,10 +425,8 @@ def synth_field_rename(event, field, name):
 def synth_field_deltaT(name='delta_T', hd=False):
     """ Create descriptor for time-diference synthetic field.
     """
-    if hd:
-        return 'delta_t {0} hd'.format(name)
-
-    return 'delta_t {0} hd'.format(name)
+    d = 'delta_t {0}'.format(name)
+    return (d, d+' hd')[hd]
 
 
 def synth_field_delta_start(name, start_field, end_field):

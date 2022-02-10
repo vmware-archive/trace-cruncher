@@ -829,6 +829,28 @@ swaking = tc.tc_event('sched', 'sched_waking')
 sswitch = tc.tc_event('sched', 'sched_switch')
 
 class SynthOopTestCase(unittest.TestCase):
+    def test_field_deltaT(self):
+        f =  tc.synth_field_deltaT()
+        self.assertEqual(f, 'delta_t delta_T')
+        f =  tc.synth_field_deltaT(hd=True)
+        self.assertEqual(f, 'delta_t delta_T hd')
+        f =  tc.synth_field_deltaT(name='dT', hd=True)
+        self.assertEqual(f, 'delta_t dT hd')
+        f =  tc.synth_field_deltaT(name='dT', hd=False)
+        self.assertEqual(f, 'delta_t dT')
+
+    def test_field_delta_start(self):
+        f =  tc.synth_field_delta_start('dS', 'foo', 'bar')
+        self.assertEqual(f, 'delta_start dS foo bar')
+
+    def test_field_delta_end(self):
+        f =  tc.synth_field_delta_end('dE', 'foo', 'bar')
+        self.assertEqual(f, 'delta_end dE foo bar')
+
+    def test_field_sum(self):
+        f =  tc.synth_field_sum('Sm', 'foo', 'bar')
+        self.assertEqual(f, 'sum Sm foo bar')
+
     def test_synt_create(self):
         start = tc.synth_event_item(event=swaking,
                                     fields=['target_cpu', 'prio'],
