@@ -462,6 +462,8 @@ class EprobeTestCase(unittest.TestCase):
     def test_eprobe(self):
         """ Event probes are introduced in Linux kernel 5.15
         """
+        if kernel_version < (5, 15):
+            return
 
         evt1 = 'sopen_in'
         evt1_tsys = 'syscalls'

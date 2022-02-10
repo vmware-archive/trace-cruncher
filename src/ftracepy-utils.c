@@ -12,6 +12,7 @@
 // C
 #include <search.h>
 #include <string.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
@@ -22,6 +23,47 @@
 PyObject *TFS_ERROR;
 PyObject *TEP_ERROR;
 PyObject *TRACECRUNCHER_ERROR;
+
+static char *kernel_version()
+{
+	struct utsname uts;
+
+	if (uname(&uts) != 0) {
+		PyErr_SetString(TFS_ERROR, "Failed to get kernel version.");
+		return NULL;
+	}
+
+	return strdup(uts.release);
+}
+
+static bool check_kernel_support(const char *api, int major, int minor)
+{
+	char *buff, *this_kernel = kernel_version();
+	const char *dlm = ".";
+	bool ret = false;
+	int mj, mn;
+
+        buff = strtok(this_kernel, dlm);
+	mj = atoi(buff);
+	if (mj > major)
+		ret = true;
+
+	if (mj == major) {
+		buff = strtok(NULL, dlm);
+		mn = atoi(buff);
+		if (mn >= minor)
+			ret = true;
+	}
+
+	free(this_kernel);
+	if (!ret) {
+		PyErr_Format(TFS_ERROR,
+			     "Using \'%s()\' requires kernel versions >= %i.%i",
+			     api, major, minor);
+	}
+
+	return ret;
+}
 
 static const char *get_instance_name(struct tracefs_instance *instance);
 
@@ -2382,6 +2424,10 @@ PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 		return NULL;
 	}
 
+	/* 'eprobes' are introduced in kernel version 5.15. */
+	if (!check_kernel_support("eprobe", 5, 15))
+		return NULL;
+
 	eprobe = tracefs_eprobe_alloc(TC_SYS, event, target_system, target_event, fetchargs);
 	if (!eprobe) {
 		MEM_ERROR;
@@ -2395,7 +2441,7 @@ PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 	 * there is no need to 'destroy' this event at exit.
 	 */
 	set_destroy_flag(py_dyn, false);
-	return py_dyn;;
+	return py_dyn;
 }
 
 static PyObject *set_filter(PyObject *args, PyObject *kwargs,
