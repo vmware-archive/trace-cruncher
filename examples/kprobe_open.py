@@ -38,9 +38,9 @@ fields = tc.kprobe_add_ptr_arg(name='mode',
                                fields=fields)
 
 # Create the kprobe event.
-open_probe = tc.kprobe(name='open',
-                       func='do_sys_openat2',
-                       fields=fields)
+open_probe = tc.tc_kprobe(name='open',
+                          func='do_sys_openat2',
+                          fields=fields)
 
 tep = tc.local_tep()
 tc.short_kprobe_print(tep, [open_probe])

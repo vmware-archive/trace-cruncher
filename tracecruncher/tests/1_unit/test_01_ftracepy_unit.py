@@ -664,8 +664,8 @@ tgr_file = '{0}/instances/{1}_inst/events/{2}/{3}/trigger'.format(ft.dir(), hist
 
 class HistOopTestCase(unittest.TestCase):
     def test_hist_create(self):
-        evt = tc.event(evt_sys, evt_name)
-        hist = tc.create_khist(name=hist_name, event=evt, axes=axes, weights=weights,
+        evt = tc.tc_event(evt_sys, evt_name)
+        hist = tc.create_hist(name=hist_name, event=evt, axes=axes, weights=weights,
                                sort_keys=sort_keys, sort_dir=sort_dir)
         f = open(tgr_file)
         h_buff = f.read()
@@ -677,8 +677,8 @@ class HistOopTestCase(unittest.TestCase):
         f.close()
 
     def test_hist_ctrl(self):
-        evt = tc.event(evt_sys, evt_name)
-        hist = tc.create_khist(name=hist_name, event=evt, axes=axes, weights=weights,
+        evt = tc.tc_event(evt_sys, evt_name)
+        hist = tc.create_hist(name=hist_name, event=evt, axes=axes, weights=weights,
                                sort_keys=sort_keys, sort_dir=sort_dir)
         f = open(tgr_file)
         h_buff = f.read()
@@ -715,32 +715,32 @@ class HistOopTestCase(unittest.TestCase):
         f.close()
 
     def test_1_detach(self):
-        evt = tc.event(evt_sys, evt_name)
-        hist = tc.create_khist(name=hist_name, event=evt, axes=axes, weights=weights,
-                               sort_keys=sort_keys, sort_dir=sort_dir)
+        evt = tc.tc_event(evt_sys, evt_name)
+        hist = tc.create_hist(name=hist_name, event=evt, axes=axes, weights=weights,
+                              sort_keys=sort_keys, sort_dir=sort_dir)
         self.assertTrue(hist.is_attached())
         hist.detach()
         self.assertFalse(hist.is_attached())
 
     def test_2_attach(self):
-        evt = tc.event(evt_sys, evt_name)
-        hist = tc.find_khist(name=hist_name, event=evt, axes=axes, weights=weights,
-                             sort_keys=sort_keys, sort_dir=sort_dir)
+        evt = tc.tc_event(evt_sys, evt_name)
+        hist = tc.find_hist(name=hist_name, event=evt, axes=axes, weights=weights,
+                            sort_keys=sort_keys, sort_dir=sort_dir)
         self.assertFalse(hist.is_attached())
         hist.attach()
         self.assertTrue(hist.is_attached())
 
     def test_hist_err(self):
-        evt = tc.event(evt_sys, evt_name)
+        evt = tc.tc_event(evt_sys, evt_name)
 
         err = 'Failed to find histogram'
         with self.assertRaises(Exception) as context:
-            hist = tc.find_khist(name=hist_name, event=evt, axes=axes, weights=weights,
-                                 sort_keys=sort_keys, sort_dir=sort_dir)
+            hist = tc.find_hist(name=hist_name, event=evt, axes=axes, weights=weights,
+                                sort_keys=sort_keys, sort_dir=sort_dir)
         self.assertTrue(err in str(context.exception))
 
 
-class SyntTestCase(unittest.TestCase):
+class SynthTestCase(unittest.TestCase):
     def test_synt_create(self):
         synth = ft.synth(name='wakeup_lat',
                          start_sys='sched', start_evt='sched_waking',
@@ -825,32 +825,32 @@ class SyntTestCase(unittest.TestCase):
         self.assertEqual('none', synth.get_filter())
         synth.unregister()
 
-swaking = tc.event('sched', 'sched_waking')
-sswitch = tc.event('sched', 'sched_switch')
+swaking = tc.tc_event('sched', 'sched_waking')
+sswitch = tc.tc_event('sched', 'sched_switch')
 
-class SyntTestCase(unittest.TestCase):
+class SynthOopTestCase(unittest.TestCase):
     def test_synt_create(self):
-        start = tc.ksynth_event_item(event=swaking,
-                                     fields=['target_cpu', 'prio'],
-                                     match='pid')
+        start = tc.synth_event_item(event=swaking,
+                                    fields=['target_cpu', 'prio'],
+                                    match='pid')
         self.assertEqual(start['fields'], ['target_cpu', 'prio'])
         self.assertEqual(start['match'], 'pid')
         self.assertEqual(start['field_names'], [None, None])
 
-        start = tc.ksynth_field_rename(start,
-                                       field='target_cpu', name='cpu')
+        start = tc.synth_field_rename(start,
+                                      field='target_cpu', name='cpu')
         self.assertEqual(start['field_names'], ['cpu', None])
 
-        end = tc.ksynth_event_item(event=sswitch,
-                                   fields=['prev_prio'],
-                                   match='next_pid')
+        end = tc.synth_event_item(event=sswitch,
+                                  fields=['prev_prio'],
+                                  match='next_pid')
         self.assertEqual(end['fields'], ['prev_prio'])
         self.assertEqual(end['match'], 'next_pid')
 
-        synth = tc.ksynth(name='synth_wakeup',
-                          start_event=start, end_event=end,
-                          synth_fields=[tc.ksynth_field_deltaT(hd=True)],
-                          match_name='pid')
+        synth = tc.tc_synth(name='synth_wakeup',
+                            start_event=start, end_event=end,
+                            synth_fields=[tc.synth_field_deltaT(hd=True)],
+                            match_name='pid')
 
         synth_str = synth.__repr__().split('\n')
         event = synth_str[0]

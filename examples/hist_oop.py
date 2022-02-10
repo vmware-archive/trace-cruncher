@@ -15,7 +15,7 @@ name = 'khist_example_oop'
 
 cmds = ['start', 'stop', 'show', 'continue', 'clear', 'close']
 
-evt = tc.event('kmem', 'kmalloc')
+evt = tc.tc_event('kmem', 'kmalloc')
 
 axes={'call_site': 'sym',
       'bytes_req': 'n'}
@@ -36,8 +36,8 @@ if __name__ == "__main__":
     arg1 = sys.argv[1]
     if arg1.isdigit() or arg1 == 'start':
         # Create the kernel tracing histogram.
-        hist = tc.create_khist(name=name, event=evt, axes=axes, weights=weights,
-                               sort_keys=sort_keys, sort_dir=sort_dir)
+        hist = tc.create_hist(name=name, event=evt, axes=axes, weights=weights,
+                              sort_keys=sort_keys, sort_dir=sort_dir)
         # Start taking data.
         hist.start()
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     else:
         # Try to find an existing histogram with the same definition.
         # The returned histogram is detached from the trace-cruncher module.
-        hist = tc.find_khist(name=name, event=evt, axes=axes, weights=weights,
-                             sort_keys=sort_keys, sort_dir=sort_dir)
+        hist = tc.find_hist(name=name, event=evt, axes=axes, weights=weights,
+                            sort_keys=sort_keys, sort_dir=sort_dir)
 
         if arg1 == 'stop':
             # Stop taking data.

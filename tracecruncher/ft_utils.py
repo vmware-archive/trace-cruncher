@@ -37,7 +37,7 @@ def short_kprobe_print(tep, events):
             tep.short_kprobe_print(id=e.evt_id, system=e.system, event=e.name)
 
 
-class event:
+class tc_event:
     def __init__(self, system, name, static=True):
         """ Constructor.
         """
@@ -81,7 +81,7 @@ class event:
                               event=self.name)
 
 
-class _kprobe_base(event):
+class _kprobe_base(tc_event):
     def __init__(self, name, func):
         """ Constructor.
         """
@@ -96,7 +96,8 @@ class _kprobe_base(event):
         self.kp.register()
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
 
-class kprobe(_kprobe_base):
+
+class tc_kprobe(_kprobe_base):
     def __init__(self, name, func, fields):
         """ Constructor.
         """
@@ -106,11 +107,13 @@ class kprobe(_kprobe_base):
         self.kp = ft.kprobe(event=self.name, function=self.func, probe=probe)
         self.register()
 
+
 def kprobe_add_raw_field(name, probe, fields={}):
     """ Add a raw definition of a data field to the probe descriptor.
     """
     fields[str(name)] = str(probe)
     return fields
+
 
 def kprobe_add_arg(name, param_id, param_type, fields={}):
     """ Add a function parameter data field to the probe descriptor.
@@ -118,11 +121,13 @@ def kprobe_add_arg(name, param_id, param_type, fields={}):
     probe = '$arg{0}:{1}'.format(param_id, param_type)
     return kprobe_add_raw_field(name=name, probe=probe, fields=fields)
 
+
 def kprobe_add_ptr_arg(name, param_id, param_type, offset=0, fields={}):
     """ Add a pointer function parameter data field to the probe descriptor.
     """
     probe = '+{0}($arg{1}):{2}'.format(offset, param_id, param_type)
     return kprobe_add_raw_field(name=name, probe=probe, fields=fields)
+
 
 def kprobe_add_array_arg(name, param_id, param_type, offset=0,
                          size=-1, fields={}):
@@ -138,6 +143,7 @@ def kprobe_add_array_arg(name, param_id, param_type, offset=0,
         probe += '($arg{0})):{1}'.format(param_id, param_type)
         return kprobe_add_raw_field(name=field_name, probe=probe, fields=fields)
 
+
 def kprobe_add_string_arg(name, param_id, offset=0, usr_space=False, fields={}):
     """ Add a string function parameter data field to the probe descriptor.
     """
@@ -147,6 +153,7 @@ def kprobe_add_string_arg(name, param_id, offset=0, usr_space=False, fields={}):
                               param_type=p_type,
                               offset=offset,
                               fields=fields)
+
 
 def kprobe_add_string_array_arg(name, param_id, offset=0, usr_space=False,
                                 size=-1, fields={}):
@@ -159,6 +166,7 @@ def kprobe_add_string_array_arg(name, param_id, offset=0, usr_space=False,
                                 offset=offset,
                                 size=size,
                                 fields=fields)
+
 
 def kprobe_parse_record_array_field(event, record, field, size=-1):
     """ Parse the content of an array function parameter data field.
@@ -177,7 +185,7 @@ def kprobe_parse_record_array_field(event, record, field, size=-1):
     return arr
 
 
-class kretval_probe(_kprobe_base):
+class tc_kretval_probe(_kprobe_base):
     def __init__(self, name, func):
         """ Constructor.
         """
@@ -186,7 +194,7 @@ class kretval_probe(_kprobe_base):
         self.kp.register()
 
 
-class khist:
+class tc_hist:
     def __init__(self, name, event, axes, weights=[],
                  sort_keys=[], sort_dir={}, find=False):
         """ Constructor.
@@ -282,13 +290,12 @@ class khist:
         return self.data()
 
 
-def create_khist(name, event, axes, weights=[],
-                 sort_keys=[], sort_dir={}):
+def create_hist(name, event, axes, weights=[], sort_keys=[], sort_dir={}):
     """ Create new kernel histogram.
     """
     try:
-        hist = khist(name=name, event=event, axes=axes, weights=weights,
-                     sort_keys=sort_keys, sort_dir=sort_dir, find=False)
+        hist = tc_hist(name=name, event=event, axes=axes, weights=weights,
+                       sort_keys=sort_keys, sort_dir=sort_dir, find=False)
     except Exception as err:
         msg = 'Failed to create histogram \'{0}\''.format(name)
         raise RuntimeError(msg) from err
@@ -296,20 +303,20 @@ def create_khist(name, event, axes, weights=[],
     return hist
 
 
-def find_khist(name, event, axes, instance=None,
-               weights=[], sort_keys=[], sort_dir={}):
+def find_hist(name, event, axes, weights=[], sort_keys=[], sort_dir={}):
     """ Find existing kernel histogram.
     """
     try:
-        hist = khist(name=name, event=event, axes=axes, weights=weights,
-                     sort_keys=sort_keys, sort_dir=sort_dir, find=True)
+        hist = tc_hist(name=name, event=event, axes=axes, weights=weights,
+                       sort_keys=sort_keys, sort_dir=sort_dir, find=True)
     except Exception as err:
         msg = 'Failed to find histogram \'{0}\''.format(name)
         raise RuntimeError(msg) from err
 
     return hist
 
-class ksynth(event):
+
+class tc_synth(tc_event):
     def __init__(self, name, start_event, end_event,
                  synth_fields=None, match_name=ft.no_arg()):
         """ Constructor.
@@ -380,7 +387,7 @@ class ksynth(event):
         return self.synth.repr(event=True, hist_start=True, hist_end=True)
 
 
-def ksynth_event_item(event, match, fields=[]):
+def synth_event_item(event, match, fields=[]):
     """ Create descriptor for an event item (component) of a synthetic event.
         To be used as a start/end event.
     """
@@ -393,7 +400,7 @@ def ksynth_event_item(event, match, fields=[]):
     return sub_evt
 
 
-def ksynth_field_rename(event, field, name):
+def synth_field_rename(event, field, name):
     """ Change the name of a field in the event component of a synthetic event.
     """
     pos = event['fields'].index(field)
@@ -402,7 +409,7 @@ def ksynth_field_rename(event, field, name):
     return event
 
 
-def ksynth_field_deltaT(name='delta_T', hd=False):
+def synth_field_deltaT(name='delta_T', hd=False):
     """ Create descriptor for time-diference synthetic field.
     """
     if hd:
@@ -411,19 +418,19 @@ def ksynth_field_deltaT(name='delta_T', hd=False):
     return 'delta_t {0} hd'.format(name)
 
 
-def ksynth_field_delta_start(name, start_field, end_field):
+def synth_field_delta_start(name, start_field, end_field):
     """ Create descriptor for field diference (start - end) synthetic field.
     """
     return 'delta_start {0} {1} {2}'.format(name, start_field, end_field)
 
 
-def ksynth_field_delta_end(name, start_field, end_field):
+def synth_field_delta_end(name, start_field, end_field):
     """ Create descriptor for field diference (end - start)  synthetic field.
     """
     return 'delta_end {0} {1} {2}'.format(name, start_field, end_field)
 
 
-def ksynth_field_sum(name, start_field, end_field):
+def synth_field_sum(name, start_field, end_field):
     """ Create descriptor for field sum synthetic field.
     """
     return 'sum {0} {1} {2}'.format(name, start_field, end_field)

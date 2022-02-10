@@ -21,7 +21,7 @@ def size(data):
     raise Exception('Data size is unknown.')
 
 
-class trace_file_stream:
+class tc_file_stream:
     def __init__(self, file_name='', buffer_name='top'):
         """ Constructor.
         """
@@ -216,12 +216,12 @@ class ks_session:
 def open_file(file_name):
     """ Open a trace file for reading.
     """
-    return trace_file_stream(file_name)
+    return tc_file_stream(file_name)
 
 
 def open_buffer(file_name, buffer_name):
     """ Open a aprticular buffer in a trace file for reading.
     """
-    s = trace_file_stream()
+    s = tc_file_stream()
     s.open_buffer(file_name, buffer_name)
     return s
