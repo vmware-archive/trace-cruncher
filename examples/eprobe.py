@@ -11,8 +11,10 @@ import sys
 import tracecruncher.ftracepy as ft
 import tracecruncher.ft_utils as tc
 
-open_probe = ft.eprobe(event='sopen_in', target_system='syscalls',
-                       target_event='sys_enter_openat', fetchargs='file=+0($filename):ustring')
+fields = tc.eprobe_add_string_field(name='file', target_field='filename',
+                                    usr_space=True)
+event = tc.tc_event('syscalls', 'sys_enter_openat')
+eprobe = tc.tc_eprobe(name='sopen_in', target_event=event, fields=fields)
 
 tep = tc.local_tep()
 
@@ -25,5 +27,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     inst = ft.create_instance(tracing_on=False)
-    open_probe.enable(instance=inst)
+
+    # Enable the probe.
+    eprobe.enable(instance=inst)
+
+    # Subscribe for the kprobe event (using the default function name 'callback')
+    # and trace the user process.
     ft.trace_process(instance=inst, argv=sys.argv[1:])

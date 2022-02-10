@@ -507,6 +507,20 @@ class EprobeTestCase(unittest.TestCase):
         ret = ep1.is_enabled(instance=inst)
         self.assertEqual(ret, '0')
 
+class EprobeOopTestCase(unittest.TestCase):
+    def test_eprobe(self):
+        fields = tc.eprobe_add_string_field(name='file',
+                                            target_field='filename',
+                                            usr_space=True)
+        self.assertEqual(fields, {'file': '+0($filename):ustring'})
+
+        if kernel_version < (5, 15):
+            return
+
+        event = tc.tc_event('syscalls', 'sys_enter_openat')
+        eprobe = tc.tc_eprobe(name='opn', target_event=event, fields=fields)
+        self.assertEqual(eprobe.evt.probe(), 'file=+0($filename):ustring')
+
 class TracingOnTestCase(unittest.TestCase):
     def test_ON_OF(self):
         ft.tracing_ON()

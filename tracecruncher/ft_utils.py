@@ -81,20 +81,27 @@ class tc_event:
                               event=self.name)
 
 
-class _kprobe_base(tc_event):
-    def __init__(self, name, func):
+class _dynevent(tc_event):
+    def __init__(self, name):
         """ Constructor.
         """
         super().__init__(system=ft.tc_event_system(), name=name, static=False)
-        self.func = func
-        self.kp = None
+        self.evt = None
         self.evt_id = -1
 
     def register(self):
         """ Register this probe to Ftrace.
         """
-        self.kp.register()
+        self.evt.register()
         self.evt_id = find_event_id(system=ft.tc_event_system(), event=self.name)
+
+
+class _kprobe_base(_dynevent):
+    def __init__(self, name, func):
+        """ Constructor.
+        """
+        super().__init__(name=name)
+        self.func = func
 
 
 class tc_kprobe(_kprobe_base):
@@ -104,7 +111,7 @@ class tc_kprobe(_kprobe_base):
         super().__init__(name, func)
         self.fields = fields
         probe = ' '.join('{!s}={!s}'.format(key,val) for (key, val) in self.fields.items())
-        self.kp = ft.kprobe(event=self.name, function=self.func, probe=probe)
+        self.evt = ft.kprobe(event=self.name, function=self.func, probe=probe)
         self.register()
 
 
@@ -190,8 +197,41 @@ class tc_kretval_probe(_kprobe_base):
         """ Constructor.
         """
         super().__init__(name, func)
-        self.kp = ft.kprobe(event=self.name, function=self.func)
-        self.kp.register()
+        self.evt = ft.kprobe(event=self.name, function=self.func)
+        self.register()
+
+
+class tc_eprobe(_dynevent):
+    def __init__(self, name, target_event, fields):
+        """ Constructor.
+        """
+        super().__init__(name=name)
+        self.target_event = target_event
+        self.fields = fields
+        probe = ' '.join('{!s}={!s}'.format(key,val) for (key, val) in self.fields.items())
+        self.evt = ft.eprobe(event=self.name,
+                            target_system=target_event.system,
+                            target_event=target_event.name,
+                            fetch_fields=probe)
+        self.register()
+
+
+def eprobe_add_ptr_field(name, target_field, field_type, offset=0, fields={}):
+    """ Add a pointer data field to the eprobe descriptor.
+    """
+    probe = '+{0}(${1}):{2}'.format(offset, target_field, field_type)
+    return kprobe_add_raw_field(name=name, probe=probe, fields=fields)
+
+
+def eprobe_add_string_field(name, target_field, offset=0, usr_space=False, fields={}):
+    """ Add a string data field to the eprobe descriptor.
+    """
+    f_type = 'ustring' if usr_space else 'string'
+    return eprobe_add_ptr_field(name=name,
+                                target_field=target_field,
+                                field_type=f_type,
+                                offset=offset,
+                                fields=fields)
 
 
 class tc_hist:
