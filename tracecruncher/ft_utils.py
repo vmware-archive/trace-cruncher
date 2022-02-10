@@ -331,24 +331,16 @@ class tc_synth(tc_event):
                               end_match=end_event['match'],
                               match_name=match_name)
 
-        start_fields = end_fields = []
-
-        if 'fields' in start_event:
-            start_fields = start_event['fields']
-
-        start_field_names = [None] * len(start_fields)
-        if 'field_names' in start_event:
-            start_field_names = start_event['field_names']
+        start_fields = ([], start_event['fields'])['fields' in start_event]
+        start_field_names = ([None] * len(start_fields),
+                             start_event['field_names'])['field_names' in start_event]
 
         self.synth.add_start_fields(fields=start_fields,
                                     names=start_field_names)
 
-        if 'fields' in end_event:
-            end_fields = end_event['fields']
-
-        end_field_names = [None] * len(end_fields)
-        if 'field_names' in end_event:
-            end_field_names = end_event['field_names']
+        end_fields = ([], end_event['fields'])['fields' in end_event]
+        end_field_names = ([None] * len(end_fields),
+                           end_event['field_names'])['field_names' in end_event]
 
         self.synth.add_end_fields(fields=end_fields,
                                   names=end_field_names)
