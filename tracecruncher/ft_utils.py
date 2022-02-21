@@ -115,21 +115,24 @@ class tc_kprobe(_kprobe_base):
         self.register()
 
 
-def kprobe_add_raw_field(name, probe, fields={}):
+def kprobe_add_raw_field(name, probe, fields=None):
     """ Add a raw definition of a data field to the probe descriptor.
     """
+    if fields is None:
+        fields = {}
+
     fields[str(name)] = str(probe)
     return fields
 
 
-def kprobe_add_arg(name, param_id, param_type, fields={}):
+def kprobe_add_arg(name, param_id, param_type, fields=None):
     """ Add a function parameter data field to the probe descriptor.
     """
     probe = '$arg{0}:{1}'.format(param_id, param_type)
     return kprobe_add_raw_field(name=name, probe=probe, fields=fields)
 
 
-def kprobe_add_ptr_arg(name, param_id, param_type, offset=0, fields={}):
+def kprobe_add_ptr_arg(name, param_id, param_type, offset=0, fields=None):
     """ Add a pointer function parameter data field to the probe descriptor.
     """
     probe = '+{0}($arg{1}):{2}'.format(offset, param_id, param_type)
@@ -137,7 +140,7 @@ def kprobe_add_ptr_arg(name, param_id, param_type, offset=0, fields={}):
 
 
 def kprobe_add_array_arg(name, param_id, param_type, offset=0,
-                         size=-1, fields={}):
+                         size=-1, fields=None):
     """ Add an array function parameter data field to the probe descriptor.
     """
     if size < 0:
@@ -151,7 +154,7 @@ def kprobe_add_array_arg(name, param_id, param_type, offset=0,
         return kprobe_add_raw_field(name=field_name, probe=probe, fields=fields)
 
 
-def kprobe_add_string_arg(name, param_id, offset=0, usr_space=False, fields={}):
+def kprobe_add_string_arg(name, param_id, offset=0, usr_space=False, fields=None):
     """ Add a string function parameter data field to the probe descriptor.
     """
     p_type = 'ustring' if usr_space else 'string'
@@ -163,7 +166,7 @@ def kprobe_add_string_arg(name, param_id, offset=0, usr_space=False, fields={}):
 
 
 def kprobe_add_string_array_arg(name, param_id, offset=0, usr_space=False,
-                                size=-1, fields={}):
+                                size=-1, fields=None):
     """ Add a string array function parameter data field to the probe descriptor.
     """
     p_type = 'ustring' if usr_space else 'string'
@@ -216,14 +219,14 @@ class tc_eprobe(_dynevent):
         self.register()
 
 
-def eprobe_add_ptr_field(name, target_field, field_type, offset=0, fields={}):
+def eprobe_add_ptr_field(name, target_field, field_type, offset=0, fields=None):
     """ Add a pointer data field to the eprobe descriptor.
     """
     probe = '+{0}(${1}):{2}'.format(offset, target_field, field_type)
     return kprobe_add_raw_field(name=name, probe=probe, fields=fields)
 
 
-def eprobe_add_string_field(name, target_field, offset=0, usr_space=False, fields={}):
+def eprobe_add_string_field(name, target_field, offset=0, usr_space=False, fields=None):
     """ Add a string data field to the eprobe descriptor.
     """
     f_type = 'ustring' if usr_space else 'string'
@@ -235,8 +238,8 @@ def eprobe_add_string_field(name, target_field, offset=0, usr_space=False, field
 
 
 class tc_hist:
-    def __init__(self, name, event, axes, weights=[],
-                 sort_keys=[], sort_dir={}, find=False):
+    def __init__(self, name, event, axes, weights,
+                 sort_keys, sort_dir, find=False):
         """ Constructor.
         """
         self.name = name
@@ -330,9 +333,18 @@ class tc_hist:
         return self.data()
 
 
-def create_hist(name, event, axes, weights=[], sort_keys=[], sort_dir={}):
+def create_hist(name, event, axes, weights=None, sort_keys=None, sort_dir=None):
     """ Create new kernel histogram.
     """
+    if weights is None:
+        weights = []
+
+    if sort_keys is None:
+        sort_keys = []
+
+    if sort_dir is None:
+        sort_dir = {}
+
     try:
         hist = tc_hist(name=name, event=event, axes=axes, weights=weights,
                        sort_keys=sort_keys, sort_dir=sort_dir, find=False)
@@ -343,9 +355,18 @@ def create_hist(name, event, axes, weights=[], sort_keys=[], sort_dir={}):
     return hist
 
 
-def find_hist(name, event, axes, weights=[], sort_keys=[], sort_dir={}):
+def find_hist(name, event, axes, weights=None, sort_keys=None, sort_dir=None):
     """ Find existing kernel histogram.
     """
+    if weights is None:
+        weights = []
+
+    if sort_keys is None:
+        sort_keys = []
+
+    if sort_dir is None:
+        sort_dir = {}
+
     try:
         hist = tc_hist(name=name, event=event, axes=axes, weights=weights,
                        sort_keys=sort_keys, sort_dir=sort_dir, find=True)
@@ -432,10 +453,13 @@ class tc_synth(tc_event):
         return self.synth.repr(event=True, hist_start=True, hist_end=True)
 
 
-def synth_event_item(event, match, fields=[]):
+def synth_event_item(event, match, fields=None):
     """ Create descriptor for an event item (component) of a synthetic event.
         To be used as a start/end event.
     """
+    if fields is None:
+        fields = []
+
     sub_evt = {}
     sub_evt['event'] = event
     sub_evt['fields'] = fields
