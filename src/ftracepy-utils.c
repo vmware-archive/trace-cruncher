@@ -632,8 +632,13 @@ PyObject *PyTep_short_kprobe_print(PyTep *self, PyObject *args,
 
 	ret = tep_register_event_handler(self->ptrObj, id, system, event,
 					 kprobe_info_short, NULL);
+	if (ret < 0) {
+		TfsError_fmt(NULL, "Failed to register handler for event %s/%s (%i).",
+			     system, event, id);
+		return NULL;
+	}
 
-	return PyLong_FromLong(ret);
+	Py_RETURN_NONE;
 }
 
 static bool check_file(struct tracefs_instance *instance, const char *file)
