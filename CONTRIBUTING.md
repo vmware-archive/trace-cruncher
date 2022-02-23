@@ -25,7 +25,7 @@ as described by the Linux kernel.
 Make sure that all your changes are covered by the tests. Before submitting your patch, check if everything works at 100% by running the tests in **tracecruncher/tests**. Compile your changes and install trace-cruncher (`sudo make install`), to make sure that your code is used in the tests. As trace-cruncher interacts with the Linux kernel tracing infrastructure, the tests must be run with root privileges:
 
 ``` shell
-cd tracecruncher/tests
+cd tests
 sudo python3 -m unittest discover .
 ```
 
