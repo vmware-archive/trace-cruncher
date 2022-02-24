@@ -52,7 +52,7 @@ jobs:
         sudo make install
 
     - name: Test
-      working-directory: ${{runner.workspace}}/trace-cruncher/tracecruncher/tests
+      working-directory: ${{runner.workspace}}/trace-cruncher/tests
       shell: bash
       # Execute tests defined by the CMake configuration.
       run: sudo python3 -m unittest discover .
