@@ -2,7 +2,7 @@ name: trace-cruncher CI
 
 on:
   push:
-    branches: [master, yordan_devel]
+    branches: [tracecruncher, yordan_devel]
   schedule:
     - cron:  '0 15 * * THU'
 
