@@ -2449,6 +2449,54 @@ PyObject *PyFtrace_eprobe(PyObject *self, PyObject *args, PyObject *kwargs)
 	return py_dyn;
 }
 
+static PyObject *alloc_uprobe(PyObject *self, PyObject *args, PyObject *kwargs, bool pret)
+{
+	static char *kwlist[] = {"event", "file", "offset", "fetch_args", NULL};
+	const char *event, *file, *fetchargs = NULL;
+	unsigned long long offset;
+	struct tracefs_dynevent *uprobe;
+	PyObject *py_dyn;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "ssK|s",
+					 kwlist,
+					 &event,
+					 &file,
+					 &offset,
+					 &fetchargs)) {
+		return NULL;
+	}
+
+	if (pret)
+		uprobe = tracefs_uretprobe_alloc(TC_SYS, event, file, offset, fetchargs);
+	else
+		uprobe = tracefs_uprobe_alloc(TC_SYS, event, file, offset, fetchargs);
+	if (!uprobe) {
+		MEM_ERROR;
+		return NULL;
+	}
+
+	py_dyn = PyDynevent_New(uprobe);
+	/*
+	 * Here we only allocated and initializes a dynamic event object.
+	 * However, no dynamic event is added to the system yet. Hence,
+	 * there is no need to 'destroy' this event at exit.
+	 */
+	set_destroy_flag(py_dyn, false);
+	return py_dyn;
+}
+
+PyObject *PyFtrace_uprobe(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	return alloc_uprobe(self, args, kwargs, false);
+}
+
+PyObject *PyFtrace_uretprobe(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	return alloc_uprobe(self, args, kwargs, true);
+}
+
 static PyObject *set_filter(PyObject *args, PyObject *kwargs,
 			    struct tep_handle *tep,
 			    struct tep_event *event)

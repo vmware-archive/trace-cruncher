@@ -483,6 +483,16 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 PyFtrace_eprobe_doc,
 	},
+	{"uprobe",
+	 (PyCFunction) PyFtrace_uprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a uprobe."
+	},
+	{"uretprobe",
+	 (PyCFunction) PyFtrace_uretprobe,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Define a uretprobe."
+	},
 	{"hist",
 	 (PyCFunction) PyFtrace_hist,
 	 METH_VARARGS | METH_KEYWORDS,
