@@ -317,6 +317,32 @@ C_OBJECT_WRAPPER(tracefs_synth, PySynthEvent,
 		 tracefs_synth_destroy,
 		 tracefs_synth_free)
 
+static PyMethodDef PyUserTrace_methods[] = {
+	{"add_function",
+	 (PyCFunction) PyUserTrace_add_function,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add tracepoint on user function."
+	},
+	{"add_ret_function",
+	 (PyCFunction) PyUserTrace_add_ret_function,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Add tracepoint on user function return."
+	},
+	{"enable",
+	 (PyCFunction) PyUserTrace_enable,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Enable tracing of the configured user tracepoints."
+	},
+	{"disable",
+	 (PyCFunction) PyUserTrace_disable,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Disable tracing of the configured user tracepoints."
+	},
+	{NULL, NULL, 0, NULL}
+};
+C_OBJECT_WRAPPER(py_utrace_context, PyUserTrace,
+		 py_utrace_destroy, py_utrace_free)
+
 static PyMethodDef ftracepy_methods[] = {
 	{"dir",
 	 (PyCFunction) PyFtrace_dir,
@@ -503,6 +529,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 PyFtrace_synth_doc,
 	},
+	{"user_trace",
+	 (PyCFunction) PyFtrace_user_trace,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Create a context for tracing a user process using uprobes"
+	},
 	{"set_ftrace_loglevel",
 	 (PyCFunction) PyFtrace_set_ftrace_loglevel,
 	 METH_VARARGS | METH_KEYWORDS,
@@ -577,6 +608,9 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	if (!PySynthEventTypeInit())
 		return NULL;
 
+	if (!PyUserTraceTypeInit())
+		return NULL;
+
 	TFS_ERROR = PyErr_NewException("tracecruncher.ftracepy.tfs_error",
 				       NULL, NULL);
 
@@ -595,6 +629,7 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	PyModule_AddObject(module, "tracefs_dynevent", (PyObject *) &PyDyneventType);
 	PyModule_AddObject(module, "tracefs_hist", (PyObject *) &PyTraceHistType);
 	PyModule_AddObject(module, "tracefs_synth", (PyObject *) &PySynthEventType);
+	PyModule_AddObject(module, "py_utrace_context", (PyObject *) &PyUserTraceType);
 
 	PyModule_AddObject(module, "tfs_error", TFS_ERROR);
 	PyModule_AddObject(module, "tep_error", TEP_ERROR);

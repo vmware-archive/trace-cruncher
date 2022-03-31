@@ -34,6 +34,21 @@ C_OBJECT_WRAPPER_DECLARE(tracefs_synth, PySynthEvent)
 
 PyObject *PyTepRecord_time(PyTepRecord* self);
 
+struct py_utrace_context;
+void py_utrace_free(struct py_utrace_context *utrace);
+int py_utrace_destroy(struct py_utrace_context *utrace);
+C_OBJECT_WRAPPER_DECLARE(py_utrace_context, PyUserTrace);
+
+PyObject *PyUserTrace_add_function(PyUserTrace *self, PyObject *args,
+				   PyObject *kwargs);
+
+PyObject *PyUserTrace_add_ret_function(PyUserTrace *self, PyObject *args,
+				       PyObject *kwargs);
+
+PyObject *PyUserTrace_enable(PyUserTrace *self, PyObject *args, PyObject *kwargs);
+
+PyObject *PyUserTrace_disable(PyUserTrace *self, PyObject *args, PyObject *kwargs);
+
 PyObject *PyTepRecord_cpu(PyTepRecord* self);
 
 PyObject *PyTepEvent_name(PyTepEvent* self);
@@ -269,6 +284,8 @@ PyObject *PyFtrace_synth(PyObject *self, PyObject *args,
 
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs);
+
+PyObject *PyFtrace_user_trace(PyObject *self, PyObject *args, PyObject *kwargs);
 
 PyObject *PyFtrace_trace_process(PyObject *self, PyObject *args,
 						 PyObject *kwargs);
