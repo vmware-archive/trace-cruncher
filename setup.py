@@ -74,7 +74,7 @@ def main():
                           sources=['src/ftracepy.c', 'src/ftracepy-utils.c'],
                           libraries=['traceevent', 'tracefs'])
 
-    cythonize('src/npdatawrapper.pyx', language_level = '3')
+    cythonize('src/npdatawrapper.pyx', language_level = 3)
     module_data = extension(name='tracecruncher.npdatawrapper',
                             sources=['src/npdatawrapper.c'],
                             libraries=['kshark'])
