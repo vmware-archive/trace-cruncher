@@ -39,6 +39,7 @@ doc:
 	@ echo ${CYAN}Buildinging trace-cruncher documentation:${NC};
 	@ python3 $(DOCDIR)/setup.py builtins
 	@ sudo python3 $(DOCDIR)/setup.py tracecruncher.ftracepy $(UID) $(GID)
+	@ sudo python3 $(DOCDIR)/setup.py tracecruncher.ft_utils $(UID) $(GID)
 
 clean_doc:
 	@ rm -f $(DOCDIR)/*.html
