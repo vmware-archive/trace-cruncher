@@ -6,6 +6,7 @@
 
 // trace-cruncher
 #include "ftracepy-utils.h"
+#include "ftracepy-docs.h"
 
 extern PyObject *TFS_ERROR;
 extern PyObject *TEP_ERROR;
@@ -15,12 +16,12 @@ static PyMethodDef PyTepRecord_methods[] = {
 	{"time",
 	 (PyCFunction) PyTepRecord_time,
 	 METH_NOARGS,
-	 "Get the time of the record."
+	 PyTepRecord_time_doc,
 	},
 	{"CPU",
 	 (PyCFunction) PyTepRecord_cpu,
 	 METH_NOARGS,
-	 "Get the CPU Id of the record."
+	 PyTepRecord_CPU_doc,
 	},
 	{NULL}
 };
@@ -31,26 +32,27 @@ static PyMethodDef PyTepEvent_methods[] = {
 	{"name",
 	 (PyCFunction) PyTepEvent_name,
 	 METH_NOARGS,
-	 "Get the name of the event."
+	 PyTepEvent_name_doc,
 	},
 	{"id",
 	 (PyCFunction) PyTepEvent_id,
 	 METH_NOARGS,
-	 "Get the unique identifier of the event."
+	 PyTepEvent_id_doc,
 	},
 	{"field_names",
 	 (PyCFunction) PyTepEvent_field_names,
 	 METH_NOARGS,
-	 "Get the names of all fields."
+	 PyTepEvent_field_names_doc,
 	},
 	{"parse_record_field",
 	 (PyCFunction) PyTepEvent_parse_record_field,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get the content of a record field."
+	 PyTepEvent_parse_record_field_doc,
 	},
 	{"get_pid",
 	 (PyCFunction) PyTepEvent_get_pid,
 	 METH_VARARGS | METH_KEYWORDS,
+	 PyTepEvent_get_pid_doc,
 	},
 	{NULL}
 };
@@ -61,32 +63,32 @@ static PyMethodDef PyTep_methods[] = {
 	{"init_local",
 	 (PyCFunction) PyTep_init_local,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Initialize from local instance."
+	 PyTep_init_local_doc,
 	},
 	{"get_event",
 	 (PyCFunction) PyTep_get_event,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get a PyTepEvent object."
+	 PyTep_get_event_doc,
 	},
 	{"event_record",
 	 (PyCFunction) PyTep_event_record,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Generic print of a trace event."
+	 PyTep_event_record_doc,
 	},
 	{"process",
 	 (PyCFunction) PyTep_process,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Generic print of the process that generated the trace event."
+	 PyTep_process_doc,
 	},
 	{"info",
 	 (PyCFunction) PyTep_info,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Generic print of a trace event info."
+	 PyTep_info_doc,
 	},
 	{"short_kprobe_print",
 	 (PyCFunction) PyTep_short_kprobe_print,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Do not print the address of the probe."
+	 PyTep_short_kprobe_print_doc,
 	},
 	{NULL}
 };
@@ -97,7 +99,7 @@ static PyMethodDef PyTfsInstance_methods[] = {
 	{"dir",
 	 (PyCFunction) PyTfsInstance_dir,
 	 METH_NOARGS,
-	 "Get the absolute path to the instance directory."
+	 PyTfsInstance_dir_doc,
 	},
 	{NULL, NULL, 0, NULL}
 };
@@ -110,62 +112,62 @@ static PyMethodDef PyDynevent_methods[] = {
 	{"event",
 	 (PyCFunction) PyDynevent_event,
 	 METH_NOARGS,
-	 "Get the name of the dynamic event."
+	 PyDynevent_event_doc,
 	},
 	{"system",
 	 (PyCFunction) PyDynevent_system,
 	 METH_NOARGS,
-	 "Get the system name of the dynamic event."
+	 PyDynevent_system_doc,
 	},
 	{"address",
 	 (PyCFunction) PyDynevent_address,
 	 METH_NOARGS,
-	 "Get the address / function name of the dynamic event."
+	 PyDynevent_address_doc,
 	},
 	{"probe",
 	 (PyCFunction) PyDynevent_probe,
 	 METH_NOARGS,
-	 "Get the event definition."
+	 PyDynevent_probe_doc,
 	},
 	{"register",
 	 (PyCFunction) PyDynevent_register,
 	 METH_NOARGS,
-	 "Register dynamic event."
+	 PyDynevent_register_doc,
 	},
 	{"unregister",
 	 (PyCFunction) PyDynevent_unregister,
 	 METH_NOARGS,
-	 "Unregister dynamic event."
+	 PyDynevent_unregister_doc,
 	},
 	{"set_filter",
 	 (PyCFunction) PyDynevent_set_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a filter for a dynamic event."
+	 PyDynevent_set_filter_doc,
 	},
 	{"get_filter",
 	 (PyCFunction) PyDynevent_get_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get the filter of a dynamic event."
+	 PyDynevent_get_filter_doc,
 	},
 	{"clear_filter",
 	 (PyCFunction) PyDynevent_clear_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Clear the filter of a dynamic event."
+	 PyDynevent_clearfilter_doc,
 	},
 	{"enable",
 	 (PyCFunction) PyDynevent_enable,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable dynamic event."
+	 PyDynevent_enable_doc,
 	},
 	{"disable",
 	 (PyCFunction) PyDynevent_disable,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable dynamic event."
+	 PyDynevent_disable_doc
 	},
 	{"is_enabled",
 	 (PyCFunction) PyDynevent_is_enabled,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if dynamic event is enabled."
+	 PyDynevent_is_enabled_doc,
 	},
 	{NULL, NULL, 0, NULL}
 };
@@ -183,47 +185,47 @@ static PyMethodDef PyTraceHist_methods[] = {
 	{"add_value",
 	 (PyCFunction) PyTraceHist_add_value,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add value field."
+	 PyTraceHist_add_value_doc,
 	},
 	{"sort_keys",
 	 (PyCFunction) PyTraceHist_sort_keys,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Set key felds or values to sort on."
+	 PyTraceHist_sort_keys_doc,
 	},
 	{"sort_key_direction",
 	 (PyCFunction) PyTraceHist_sort_key_direction,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Set the direction of a sort key field."
+	 PyTraceHist_sort_key_direction_doc,
 	},
 	{"start",
 	 (PyCFunction) PyTraceHist_start,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Start acquiring data."
+	 PyTraceHist_start_doc,
 	},
 	{"stop",
 	 (PyCFunction) PyTraceHist_stop,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Pause acquiring data."
+	 PyTraceHist_stop_doc,
 	},
 	{"resume",
 	 (PyCFunction) PyTraceHist_resume,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Continue acquiring data."
+	 PyTraceHist_resume_doc,
 	},
 	{"clear",
 	 (PyCFunction) PyTraceHist_clear,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Reset the histogram."
+	 PyTraceHist_clear_doc,
 	},
 	{"read",
 	 (PyCFunction) PyTraceHist_read,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Read the content of the histogram."
+	 PyTraceHist_read_doc,
 	},
 	{"close",
 	 (PyCFunction) PyTraceHist_close,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Destroy the histogram."
+	 PyTraceHist_close_doc
 	},
 	{NULL, NULL, 0, NULL}
 };
@@ -236,77 +238,77 @@ static PyMethodDef PySynthEvent_methods[] = {
 	{"add_start_fields",
 	 (PyCFunction) PySynthEvent_add_start_fields,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add fields from the start event to save."
+	 PySynthEvent_add_start_fields_doc,
 	},
 	{"add_end_fields",
 	 (PyCFunction) PySynthEvent_add_end_fields,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add fields from the end event to save."
+	 PySynthEvent_add_end_fields_doc,
 	},
 	{"add_delta_start",
 	 (PyCFunction) PySynthEvent_add_delta_start,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add 'start - end' field."
+	 PySynthEvent_add_delta_start_doc,
 	},
 	{"add_delta_end",
 	 (PyCFunction) PySynthEvent_add_delta_end,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add 'end - start' field."
+	 PySynthEvent_add_delta_start_doc,
 	},
 	{"add_delta_T",
 	 (PyCFunction) PySynthEvent_add_delta_T,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add time-difference field."
+	 PySynthEvent_add_delta_T_doc,
 	},
 	{"add_sum",
 	 (PyCFunction) PySynthEvent_add_delta_T,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Add 'start + end' field."
+	 PySynthEvent_add_sum_doc,
 	},
 	{"register",
 	 (PyCFunction) PySynthEvent_register,
 	 METH_NOARGS,
-	 "Register synth. event."
+	 PySynthEvent_register_doc,
 	},
 	{"unregister",
 	 (PyCFunction) PySynthEvent_unregister,
 	 METH_NOARGS,
-	 "Unregister synth. event."
+	 PySynthEvent_unregister_doc,
 	},
 	{"enable",
 	 (PyCFunction) PySynthEvent_enable,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable synth. event."
+	 PySynthEvent_enable_doc,
 	},
 	{"disable",
 	 (PyCFunction) PySynthEvent_disable,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable synth. event."
+	 PySynthEvent_disable_doc,
 	},
 	{"is_enabled",
 	 (PyCFunction) PySynthEvent_is_enabled,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if synth. event is enabled."
+	 PyDynevent_is_enabled_doc,
 	},
 	{"set_filter",
 	 (PyCFunction) PySynthEvent_set_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a filter for a synthetic event."
+	 PySynthEvent_set_filter_doc,
 	},
 	{"get_filter",
 	 (PyCFunction) PySynthEvent_get_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get the filter of a synthetic event."
+	 PySynthEvent_get_filter_doc,
 	},
 	{"clear_filter",
 	 (PyCFunction) PySynthEvent_clear_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Clear the filter of a synthetic event."
+	 PySynthEvent_clearfilter_doc,
 	},
 	{"repr",
 	 (PyCFunction) PySynthEvent_repr,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Show a representative descriptor of the synth. event."
+	 PySynthEvent_repr_doc,
 	},
 	{NULL, NULL, 0, NULL}
 };
@@ -319,142 +321,142 @@ static PyMethodDef ftracepy_methods[] = {
 	{"dir",
 	 (PyCFunction) PyFtrace_dir,
 	 METH_NOARGS,
-	 "Get the absolute path to the tracefs directory."
+	 PyFtrace_dir_doc,
 	},
 	{"detach",
 	 (PyCFunction) PyFtrace_detach,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Detach object from the \'ftracepy\' module."
+	 PyFtrace_detach_doc,
 	},
 	{"attach",
 	 (PyCFunction) PyFtrace_attach,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Attach object to the \'ftracepy\' module."
+	 PyFtrace_attach_doc,
 	},
 	{"is_attached",
 	 (PyCFunction) PyFtrace_is_attached,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if the object is attached to the \'ftracepy\' module."
+	 PyFtrace_is_attached_doc,
 	},
 	{"create_instance",
 	 (PyCFunction) PyFtrace_create_instance,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Create new tracefs instance."
+	 PyFtrace_create_instance_doc,
 	},
 	{"find_instance",
 	 (PyCFunction) PyFtrace_find_instance,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Find an existing ftrace instance."
+	 PyFtrace_find_instance_doc,
 	},
 	{"available_tracers",
 	 (PyCFunction) PyFtrace_available_tracers,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get a list of available tracers."
+	 PyFtrace_available_tracers_doc,
 	},
 	{"set_current_tracer",
 	 (PyCFunction) PyFtrace_set_current_tracer,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable a tracer."
+	 PyFtrace_set_current_tracer_doc,
 	},
 	{"get_current_tracer",
 	 (PyCFunction) PyFtrace_get_current_tracer,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check the enabled tracer."
+	 PyFtrace_get_current_tracer_doc,
 	},
 	{"available_event_systems",
 	 (PyCFunction) PyFtrace_available_event_systems,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get a list of available trace event systems."
+	 PyFtrace_available_event_systems_doc,
 	},
 	{"available_system_events",
 	 (PyCFunction) PyFtrace_available_system_events,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get a list of available trace event for a given system."
+	 PyFtrace_available_event_systems_doc,
 	},
 	{"enable_event",
 	 (PyCFunction) PyFtrace_enable_event,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable trece event."
+	 PyFtrace_enable_event_doc,
 	},
 	{"disable_event",
 	 (PyCFunction) PyFtrace_disable_event,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable trece event."
+	 PyFtrace_disable_event_doc,
 	},
 	{"enable_events",
 	 (PyCFunction) PyFtrace_enable_events,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable multiple trece event."
+	 PyFtrace_enable_events_doc,
 	},
 	{"disable_events",
 	 (PyCFunction) PyFtrace_disable_events,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable multiple trece event."
+	 PyFtrace_disable_events_doc,
 	},
 	{"event_is_enabled",
 	 (PyCFunction) PyFtrace_event_is_enabled,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if event is enabled."
+	 PyFtrace_event_is_enabled_doc,
 	},
 	{"set_event_filter",
 	 (PyCFunction) PyFtrace_set_event_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define event filter."
+	 PyFtrace_set_event_filter_doc,
 	},
 	{"clear_event_filter",
 	 (PyCFunction) PyFtrace_clear_event_filter,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Clear event filter."
+	 PyFtrace_clear_event_filter_doc,
 	},
 	{"tracing_ON",
 	 (PyCFunction) PyFtrace_tracing_ON,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Start tracing."
+	 PyFtrace_tracing_ON_doc
 	},
 	{"tracing_OFF",
 	 (PyCFunction) PyFtrace_tracing_OFF,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Stop tracing."
+	 PyFtrace_tracing_OFF_doc
 	},
 	{"is_tracing_ON",
 	 (PyCFunction) PyFtrace_is_tracing_ON,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if tracing is ON."
+	 PyFtrace_is_tracing_ON_doc,
 	},
 	{"set_event_pid",
 	 (PyCFunction) PyFtrace_set_event_pid,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "."
+	 PyFtrace_set_event_pid_doc,
 	},
 	{"set_ftrace_pid",
 	 (PyCFunction) PyFtrace_set_ftrace_pid,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "."
+	 PyFtrace_set_ftrace_pid_doc,
 	},
 	{"enable_option",
 	 (PyCFunction) PyFtrace_enable_option,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Enable trece option."
+	 PyFtrace_enable_option_doc
 	},
 	{"disable_option",
 	 (PyCFunction) PyFtrace_disable_option,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Disable trece option."
+	 PyFtrace_disable_option_doc
 	},
 	{"option_is_set",
 	 (PyCFunction) PyFtrace_option_is_set,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Check if trece option is enabled."
+	 PyFtrace_option_is_set_doc,
 	},
 	{"supported_options",
 	 (PyCFunction) PyFtrace_supported_options,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Gat a list of all supported options."
+	 PyFtrace_supported_options_doc,
 	},
 	{"enabled_options",
 	 (PyCFunction) PyFtrace_enabled_options,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Gat a list of all supported options."
+	 PyFtrace_enabled_options_doc
 	},
 	{"tc_event_system",
 	 (PyCFunction) PyFtrace_tc_event_system,
@@ -469,67 +471,67 @@ static PyMethodDef ftracepy_methods[] = {
 	{"kprobe",
 	 (PyCFunction) PyFtrace_kprobe,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a kprobe."
+	 PyFtrace_kprobe_doc,
 	},
 	{"kretprobe",
 	 (PyCFunction) PyFtrace_kretprobe,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a kretprobe."
+	 PyFtrace_kretprobe_doc,
 	},
 	{"eprobe",
 	 (PyCFunction) PyFtrace_eprobe,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define an eprobe."
+	 PyFtrace_eprobe_doc,
 	},
 	{"hist",
 	 (PyCFunction) PyFtrace_hist,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a histogram."
+	 PyFtrace_hist_doc,
 	},
 	{"synth",
 	 (PyCFunction) PyFtrace_synth,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Define a synthetic event."
+	 PyFtrace_synth_doc,
 	},
 	{"set_ftrace_loglevel",
 	 (PyCFunction) PyFtrace_set_ftrace_loglevel,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Set the verbose level of the ftrace libraries."
+	 PyFtrace_set_ftrace_loglevel_doc,
 	},
 	{"trace_process",
 	 (PyCFunction) PyFtrace_trace_process,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Trace a process."
+	 PyFtrace_trace_process_doc,
 	},
 	{"trace_shell_process",
 	 (PyCFunction) PyFtrace_trace_shell_process,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Trace a process executed within a shell."
+	 PyFtrace_trace_shell_process_doc,
 	},
 	{"read_trace",
 	 (PyCFunction) PyFtrace_read_trace,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Trace a shell process."
+	 PyFtrace_read_trace_doc,
 	},
 	{"iterate_trace",
 	 (PyCFunction) PyFtrace_iterate_trace,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Trace a shell process."
+	 PyFtrace_iterate_trace_doc,
 	},
 	{"hook2pid",
 	 (PyCFunction) PyFtrace_hook2pid,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Trace only particular process."
+	 PyFtrace_hook2pid_doc,
 	},
 	{"error_log",
 	 (PyCFunction) PyFtrace_error_log,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Get the content of the error log."
+	 PyFtrace_error_log_doc,
 	},
 	{"clear_error_log",
 	 (PyCFunction) PyFtrace_clear_error_log,
 	 METH_VARARGS | METH_KEYWORDS,
-	 "Clear the content of the error log."
+	 PyFtrace_clear_error_log_doc,
 	},
 	{NULL, NULL, 0, NULL}
 };
