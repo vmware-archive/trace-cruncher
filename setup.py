@@ -37,7 +37,7 @@ def add_library(lib, min_version,
         libs_found.extend([(lib, lib_version)])
 
 def third_party_paths():
-    library_dirs = []
+    library_dirs = ['$ORIGIN','tracecruncher']
     include_dirs = [np.get_include()]
     libs_required = [('libtraceevent', '1.5.0'),
                      ('libtracefs',    '1.3.0'),
@@ -61,7 +61,6 @@ include_dirs, library_dirs = third_party_paths()
 
 def extension(name, sources, libraries):
     runtime_library_dirs = library_dirs
-    runtime_library_dirs.extend('$ORIGIN')
     return Extension(name, sources=sources,
                            include_dirs=include_dirs,
                            library_dirs=library_dirs,
@@ -91,6 +90,7 @@ def main():
           url='https://github.com/vmware/trace-cruncher',
           license='LGPL-2.1',
           packages=find_packages(),
+          package_data={'tracecruncher': ['*.so']},
           ext_modules=[module_ft, module_data, module_ks],
           classifiers=[
               'Development Status :: 4 - Beta',

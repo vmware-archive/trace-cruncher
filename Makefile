@@ -13,13 +13,31 @@ NC	:= '\e[0m'
 
 DOCDIR = ./docs
 
-all:
+CC = gcc
+CFLAGS = -fPIC -Wall -Wextra -O2 -g
+LDFLAGS = -shared -lbfd
+RM = rm -rf
+
+TC_BASE_LIB = tracecruncher/libtcrunchbase.so
+PY_SETUP = setup
+
+BASE_SRCS = src/trace-obj-debug.c
+BASE_OBJS = $(BASE_SRCS:.c=.o)
+
+all: $(TC_BASE_LIB) $(PY_SETUP)
 	@ echo ${CYAN}Buildinging trace-cruncher:${NC};
+
+$(PY_SETUP):
 	python3 setup.py build
 
+$(TC_BASE_LIB): $(BASE_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
 clean:
-	rm -f src/npdatawrapper.c
-	rm -rf build
+	${RM} src/npdatawrapper.c
+	${RM} $(TC_BASE_LIB)
+	${RM} src/*.o
+	${RM} build
 
 install:
 	@ echo ${CYAN}Installing trace-cruncher:${NC};
