@@ -17,83 +17,59 @@ Trace-Cruncher has the following external dependencies:
 
 1.1 In order to install all packages on Ubuntu do the following:
 
-    > sudo apt-get update
-
-    > sudo apt-get install build-essential git cmake libjson-c-dev -y
-
-    > sudo apt-get install libpython3-dev cython3 python3-numpy python3-pip -y
-
-    > sudo apt-get install flex valgrind -y
-
-    > sudo pip3 install --system pkgconfig GitPython
+    sudo apt-get update
+    sudo apt-get install build-essential git cmake libjson-c-dev -y
+    sudo apt-get install libpython3-dev cython3 python3-numpy python3-pip -y
+    sudo apt-get install flex valgrind binutils-dev pkg-config -y
+    sudo pip3 install --system pkgconfig GitPython
 
 1.2 In order to install all packages on Fedora, as root do the following:
 
-    > sudo dnf install gcc gcc-c++ git cmake json-c-devel -y
-
-    > sudo dnf install python3-devel python3-Cython python3-numpy python3-pip -y
-
-    > sudo dnf install flex valgrind -y
-
-    > sudo pip3 install --system pkgconfig GitPython
-
+    sudo dnf install gcc gcc-c++ git cmake json-c-devel -y
+    sudo dnf install python3-devel python3-Cython python3-numpy python3-pip -y
+    sudo dnf install flex valgrind -y
+    sudo pip3 install --system pkgconfig GitPython
 
 2 In order to install all third party libraries do the following:
 
-    > git clone https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git/
+    git clone https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git/
+    cd libtraceevent
+    make
+    sudo make install
+    cd ..
 
-    > cd libtraceevent
+    git clone https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/
+    cd libtracefs
+    make
+    sudo make install
+    cd ..
 
-    > make
+    git clone https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/
+    cd trace-cmd
+    make
+    sudo make install_libs
+    cd ..
 
-    > sudo make install
-
-    > cd ..
-
-
-    > git clone https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/
-
-    > cd libtracefs
-
-    > make
-
-    > sudo make install
-
-    > cd ..
-
-
-    > git clone https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/
-
-    > cd trace-cmd
-
-    > make
-
-    > sudo make install_libs
-
-    > cd ..
-
-
-    > git clone https://git.kernel.org/pub/scm/utils/trace-cmd/kernel-shark.git/
-
-    > cd kernel-shark/build
-
-    > cmake ..
-
-    > make
-
-    > sudo make install
-
-    > cd ../..
+    git clone https://git.kernel.org/pub/scm/utils/trace-cmd/kernel-shark.git/
+    cd kernel-shark/build
+    cmake ..
+    make
+    sudo make install
+    cd ../..
 
 ### Build & Run
 
 Installing trace-cruncher is very simple. After downloading the source code, you just have to run:
 
-     > cd trace-cruncher
+    cd trace-cruncher
+    make
+    sudo make install
 
-     > make
+### Testing
 
-     > sudo make install
+To execute the unit tests run the following from the `trace-cruncher/tests` directory:
+
+	sudo python3 -m unittest discover .
 
 ## Documentation
 For questions about the use of Trace-Cruncher, please send email to: linux-trace-users@vger.kernel.org
