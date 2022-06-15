@@ -5,20 +5,24 @@
 The trace-cruncher project team welcomes contributions from the community. All contributions to this repository must be
 signed. Your signature certifies that you wrote the patch or have the right to pass it on as an open-source patch.
 
-The development process of trace-cruncher is strongly coupled to the development of the Linux kernel tracing libraries [libtraceevent](https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git), [libtracefs](https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/) and [KernelShark](https://git.kernel.org/pub/scm/utils/trace-cmd/kernel-shark.git/). Because of this reason we adopt and follow the development workflow established by those projects.
+### Submitting patches
 
-For contributions to development, please send patches to: linux-trace-devel@vger.kernel.org
+Patches can be submitted by either:
+ 1. Using the regular [Github Flow](https://docs.github.com/en/get-started/quickstart/github-flow):
+    - The main branch is **tracecruncher**.
+    - Any changes must be on a feature branch or on a fork.
+    - Tests must pass before merging, and the pull request must be [reviewed](https://docs.github.com/en/github/collaborating-with-pull-requests/reviewing-changes-in-pull-requests) and approved.
+    - Break the complex Pull Requests into small self-contained patches.
 
-[Subscribe](http://vger.kernel.org/vger-lists.html#linux-trace-devel) / [Archives](https://lore.kernel.org/linux-trace-devel/)
+ 2. Using the [Linux kernel](https://www.kernel.org/doc/html/v5.4/process/submitting-patches.html) development workflow:
+    - Add prefix "trace-cruncher:" to the patch subject.
+    - Break the changes into small self-contained patches and group them in a patch set.
+    - Send patches to linux-trace-devel@vger.kernel.org
+    - [Subscribe](http://vger.kernel.org/vger-lists.html#linux-trace-devel) / [Archives](https://lore.kernel.org/linux-trace-devel/)
 
 ### Code Style
 
 The preferred coding style for the project is the [Linux kernel coding style](https://www.kernel.org/doc/html/v4.10/process/coding-style.html#linux-kernel-coding-style)
-
-### Formatting Commit Messages
-
-The project follows the conventions for [submitting patches](https://www.kernel.org/doc/html/v5.4/process/submitting-patches.html)
-as described by the Linux kernel.
 
 ### Tests
 
@@ -30,6 +34,6 @@ sudo python3 -m unittest discover .
 ```
 
 ## Reporting Bugs and Creating Issues
-For bug reports and issues, please file it [bugzilla](https://bugzilla.kernel.org/buglist.cgi?component=Trace-cmd%2FKernelshark&product=Tools&resolution=---)
-
-When opening a new issue, try to roughly follow the commit message format conventions above.
+Bug reports and issues can be submitted by either:
+1. Create a [Github issue](https://docs.github.com/es/issues/tracking-your-work-with-issues/creating-an-issue) in [trace-cruncher](https://github.com/vmware/trace-cruncher).
+2. Report them in [bugzilla](https://bugzilla.kernel.org/buglist.cgi?component=Trace-cmd%2FKernelshark&product=Tools&resolution=---), **Tools and utilities** category, **Trace-cmd and kernelshark** component.
