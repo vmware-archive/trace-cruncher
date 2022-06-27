@@ -71,6 +71,17 @@ To execute the unit tests run the following from the `trace-cruncher/tests` dire
 
 	sudo python3 -m unittest discover .
 
+## Installation via Docker
+
+trace-cruncher can be installed using Docker. Run the following as root from the cloned repository:
+    docker build --no-cache -t trace-cruncher-image - < Dockerfile
+
+We recommend using the `--no-cache` flag to ensure git updates are not missed in the build, as well as the `--squash` flag to shrink the final image size by removing the build dependencies.
+
+When running trace-cruncher as a docker container, the container must be started with the `--privileged` flag to give trace-cruncher access to the host kernel. See below:
+
+    docker run --privileged --name trace-cruncher-container -it trace-cruncher-image
+
 ## Documentation
 For questions about the use of Trace-Cruncher, please send email to: linux-trace-users@vger.kernel.org
 
