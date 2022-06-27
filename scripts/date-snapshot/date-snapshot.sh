@@ -7,8 +7,8 @@
 # Takes inputs specified via command line or in a file
 
 package=date-snapshot
-clean=false # clean and download define the script's behavior
-download=true
+clean="false" # clean and download define the script's behavior
+download="true"
 # If clean is set, we delete existing repos. If not, we leave them untouched (no checkout).
 # If download is set, we download and checkout the repos specified if they don't exist.
 
@@ -16,26 +16,30 @@ download_checkout(){
   IN="${1}"
   IFS=';' read -ra ADDR <<< "$IN"
 
-  if $clean ; then # delete the repos if requested
-    echo "Removing ${ADDR[0]}"
-    rm -rf ./${ADDR[0]}
+  if [[ $clean = "true" ]] ; then # delete the repos if requested
+    if [[ ! -d "${ADDR[0]}" ]] ; then
+      echo "*** Warning: Directory ${ADDR[0]} does not exist, nothing to delete"
+    else
+      echo "Removing ${ADDR[0]}"
+      rm -rf "./${ADDR[0]}"
+    fi
   fi
 
   # if download is true and directory doesn't exist
-  if [[ $download = true && ! -d ${ADDR[0]} ]] ; then
-    git clone -b ${ADDR[2]} ${ADDR[1]} ${ADDR[0]}
-    cd ${ADDR[0]}
+  if [[ $download = "true" && ! -d "${ADDR[0]}" ]] ; then
+    git clone -b "${ADDR[2]}" "${ADDR[1]}" "${ADDR[0]}"
+    cd "${ADDR[0]}"
 
-    last_date=`date -d ${ADDR[3]} +%s` # convert given date to unix timestamp
+    last_date=`date -d "${ADDR[3]}" +%s` # convert given date to unix timestamp
     # we could simply give the param to git but it understands fewer formats than date
 
     # this checks out the first entry in the list of commit hashes which occur before our date
-    git checkout `git log --date=unix --before=${last_date} --pretty=format:"%H" | head -n 1`
+    git checkout `git log --date=unix --before="${last_date}" --pretty=format:"%H" | head -n 1`
 
     cd ..
-  elif [[ $download = false ]]; then
+  elif [[ $download = "false" ]] ; then
     echo "Download flag not set, skipping ${ADDR[0]}"
-  elif [[ -d ${ADDR[0]} ]] ; then
+  elif [[ -d "${ADDR[0]}" ]] ; then
     echo "Directory exists, skipping ${ADDR[0]}"
   fi
 
@@ -61,13 +65,13 @@ while test $# -gt 0; do
       ;;
     -c|--clean)
       shift
-      clean=true
-      download=true
+      clean="true"
+      download="true"
       ;;
     -d|--delete)
       shift
-      clean=true
-      download=false
+      clean="true"
+      download="false"
       ;;
     -i|--input)
       shift
