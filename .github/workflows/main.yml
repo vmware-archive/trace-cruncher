@@ -5,6 +5,7 @@ on:
     branches: [tracecruncher, yordan_devel]
   schedule:
     - cron:  '0 15 * * THU'
+  workflow_dispatch:
 
 jobs:
   build:
