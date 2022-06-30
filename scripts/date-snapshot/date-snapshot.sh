@@ -112,7 +112,7 @@ while test $# -gt 0; do
       ;;
     -i|--input)
       shift
-      workdir="${pwd}"
+      workdir="$(pwd)"
       IFS=" "
       while read repo; do
         download_checkout $repo
