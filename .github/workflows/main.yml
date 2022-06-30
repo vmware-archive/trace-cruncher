@@ -14,6 +14,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install Dependencies
+      working-directory: ${{runner.workspace}}/trace-cruncher
       shell: bash
       run: |
         sudo apt-get update
@@ -21,22 +22,20 @@ jobs:
         sudo apt-get install libpython3-dev cython3 python3-numpy -y
         sudo apt install python3-pip
         sudo pip3 install --system pkgconfig GitPython
-        git clone https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git/
+        cd ./scripts/date-snapshot/
+        bash ./date-snapshot.sh -f ./repos
         cd libtraceevent
         make
         sudo make install
         cd ..
-        git clone https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/
         cd libtracefs
         make
         sudo make install
         cd ..
-        git clone https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git
         cd trace-cmd
         make
         sudo make install_libs
         cd ..
-        git clone https://github.com/yordan-karadzhov/kernel-shark-v2.beta.git kernel-shark
         cd kernel-shark/build
         cmake ..
         make
