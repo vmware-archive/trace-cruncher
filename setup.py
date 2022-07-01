@@ -70,8 +70,8 @@ def extension(name, sources, libraries):
 
 def main():
     module_ft = extension(name='tracecruncher.ftracepy',
-                          sources=['src/ftracepy.c', 'src/ftracepy-utils.c', 'src/trace-obj-debug.c'],
-                          libraries=['traceevent', 'tracefs', 'bfd'])
+                          sources=['src/ftracepy.c', 'src/ftracepy-utils.c'],
+                          libraries=['traceevent', 'tracefs', 'tcrunchbase', 'rt'])
 
     cythonize('src/npdatawrapper.pyx', language_level = 3)
     module_data = extension(name='tracecruncher.npdatawrapper',

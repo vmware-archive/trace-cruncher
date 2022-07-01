@@ -15,7 +15,7 @@ DOCDIR = ./docs
 
 CC = gcc
 CFLAGS = -fPIC -Wall -Wextra -O2 -g
-LDFLAGS = -shared -lbfd
+LDFLAGS = -shared -lbfd -lrt
 RM = rm -rf
 
 TC_BASE_LIB = tracecruncher/libtcrunchbase.so
