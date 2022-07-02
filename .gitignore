@@ -10,3 +10,7 @@ tracecruncher.egg-info/
 dist/
 src/npdatawrapper.c
 install_manifest.txt
+scripts/date-snapshot/libtracefs
+scripts/date-snapshot/libtraceevent
+scripts/date-snapshot/trace-cmd
+scripts/date-snapshot/kernel-shark
