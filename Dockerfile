@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1
 # Copyright (C) 2022, VMware Inc, June Knauth <june.knauth@gmail.com>
 
-FROM debian
+FROM debian:bullseye
 # Install APT and pip dependencies
 RUN apt update && apt install build-essential git cmake libjson-c-dev libpython3-dev cython3 python3-numpy python3-pip flex valgrind binutils-dev pkg-config swig curl -y && pip3 install pkgconfig GitPython
 # Download the latest date-snapshot tool from the trace-cruncher GitHub
@@ -20,3 +20,6 @@ RUN cd trace-cmd && make && make install_libs
 RUN cd kernel-shark/build && cmake .. && make && make install
 # Install trace-cruncher
 RUN cd trace-cruncher && make && make install
+# Remove build dependencies; run build with --squash to reduce image size
+RUN cd trace-cruncher && make clean
+RUN pip3 uninstall pkgconfig -y && apt remove build-essential cmake python3-pip libpython3-dev flex valgrind binutils-dev pkg-config swig curl -y && apt autoremove -y
