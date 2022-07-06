@@ -5,14 +5,14 @@
 FROM debian:bullseye
 # Install APT and pip dependencies
 RUN apt update && apt install build-essential git cmake libjson-c-dev libpython3-dev cython3 python3-numpy python3-pip flex valgrind binutils-dev pkg-config swig curl -y && pip3 install pkgconfig GitPython
-# Download the latest date-snapshot tool from the trace-cruncher GitHub
+# Download the latest git-snapshot tool from the trace-cruncher GitHub
 # Then use it to download a snapshot of trace-cruncher and its dependencies (defined in repos)
 RUN mkdir build
 WORKDIR build
-RUN curl -o date-snapshot.sh https://raw.githubusercontent.com/vmware/trace-cruncher/tracecruncher/scripts/date-snapshot/date-snapshot.sh &&\
-curl -o repos https://raw.githubusercontent.com/vmware/trace-cruncher/tracecruncher/scripts/date-snapshot/repos &&\
-bash ./date-snapshot.sh -i "trace-cruncher;https://github.com/vmware/trace-cruncher.git;tracecruncher;20220628" &&\
-bash ./date-snapshot.sh -f repos
+RUN curl -o git-snapshot.sh https://raw.githubusercontent.com/vmware/trace-cruncher/tracecruncher/scripts/git-snapshot/git-snapshot.sh &&\
+curl -o repos https://raw.githubusercontent.com/vmware/trace-cruncher/tracecruncher/scripts/git-snapshot/repos &&\
+bash ./git-snapshot.sh -l -i "trace-cruncher;https://github.com/vmware/trace-cruncher.git;tracecruncher;" &&\
+bash ./git-snapshot.sh -f repos
 # Build kernel tracing libs
 RUN cd libtraceevent && make && make install
 RUN cd libtracefs && make && make install
