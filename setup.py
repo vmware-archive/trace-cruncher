@@ -40,7 +40,7 @@ def third_party_paths():
     library_dirs = ['$ORIGIN','tracecruncher']
     include_dirs = [np.get_include()]
     libs_required = [('libtraceevent', '1.5.0'),
-                     ('libtracefs',    '1.3.0'),
+                     ('libtracefs',    '1.4.1'),
                      ('libkshark',     '2.0.1')]
     libs_found = []
 

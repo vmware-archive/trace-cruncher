@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: LGPL-2.1
 # Copyright (C) 2022, VMware Inc, June Knauth <june.knauth@gmail.com>
 #
-# Script to download one or several git repos at the last commit before a specified date
+# Script to download one or several git repos and checkout a specified reference
+# References can be tags, commit hashes, or anything else accepted by `git checkout`
 # Takes inputs specified via command line or in a file
 
-package=date-snapshot
+package="git-snapshot"
 clean="false" # Delete existing repos
 download="true" # Download and checkout the repos specified if they don't exist
 verbose="false" # Print non-critical debug info and warnings
@@ -56,10 +57,10 @@ download_checkout(){
     git clone -b "${ADDR[2]}" "${ADDR[1]}" "${workdir}/${ADDR[0]}"
     if [[ $latest = "false" ]] ; then # If latest flag is set, leave repo as-is
       cd "${workdir}/${ADDR[0]}"
-      last_date=`date -d "${ADDR[3]}" +%s` # convert given date to unix timestamp
-      # we could simply give the param to git but it understands fewer formats than date
-      # this checks out the first entry in the list of commit hashes which occur before our date
-      git checkout `git log --date=unix --before="${last_date}" --pretty=format:"%H" | head -n 1`
+      if [[ git rev-parse --verify "${ADDR[3]}" = "0" ]] ; then # If we can checkout the reference
+        git checkout "${ADDR[3]}" # Checkout the provided reference
+      else
+        log_critical "*** Warning: Cannot checkout reference ${ADDR[3]}"
       cd "${workdir}"
     else
       log_verbose "Latest flag set, skipping checkout for ${ADDR[0]}"
@@ -76,9 +77,8 @@ download_checkout(){
 while test $# -gt 0; do
   case "$1" in
     -h|--help)
-      echo "$package - Download a git repo and checkout the last commit before a given date"
-      echo "Takes CLI and file arguments with format '<repo name>;<repo url>;<branch>;<date>'"
-      echo "Dates can be provided in any format the unix 'date' command understands."
+      echo "$package - Download a git repo and checkout a given tag or commit hash"
+      echo "Takes CLI and file arguments with format '<repo name>;<repo url>;<branch>;<reference>'"
       echo " "
       echo "$package [options] [arguments]"
       echo " "
@@ -87,7 +87,7 @@ while test $# -gt 0; do
       echo "-c, --clean               delete the directories specified in the input and continue"
       echo "-d, --delete              delete the directories specified in the input and exit"
       echo "-v, --verbose             print debugging information to the console"
-      echo "-l, --latest              ignore specified date and checkout the latest versions"
+      echo "-l, --latest              ignore specified reference and checkout the latest versions"
       echo "-i, --input REPOS         specify a space-sep'd list of repos to download"
       echo "-f, --file FILE           specify an input file, one repo per line"
       exit 0

@@ -1,0 +1,4 @@
+libtraceevent;https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git/;libtraceevent;libtraceevent-1.6.1
+libtracefs;https://git.kernel.org/pub/scm/libs/libtrace/libtracefs.git/;libtracefs;libtracefs-1.4.1
+trace-cmd;https://git.kernel.org/pub/scm/utils/trace-cmd/trace-cmd.git/;master;trace-cmd-v3.1.1
+kernel-shark;https://git.kernel.org/pub/scm/utils/trace-cmd/kernel-shark.git;kernelshark;kernelshark-v2.1.1
