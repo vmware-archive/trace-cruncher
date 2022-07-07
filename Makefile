@@ -38,7 +38,7 @@ clean:
 	${RM} $(TC_BASE_LIB)
 	${RM} src/*.o
 	${RM} build
-	bash scripts/date-snapshot/date-snapshot.sh -d -f scripts/date-snapshot/repos
+	bash scripts/git-snapshot/git-snapshot.sh -d -f scripts/git-snapshot/repos
 
 install:
 	@ echo ${CYAN}Installing trace-cruncher:${NC};

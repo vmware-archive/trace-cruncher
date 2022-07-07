@@ -57,10 +57,12 @@ download_checkout(){
     git clone -b "${ADDR[2]}" "${ADDR[1]}" "${workdir}/${ADDR[0]}"
     if [[ $latest = "false" ]] ; then # If latest flag is set, leave repo as-is
       cd "${workdir}/${ADDR[0]}"
-      if [[ git rev-parse --verify "${ADDR[3]}" = "0" ]] ; then # If we can checkout the reference
+      null=$(git rev-parse --verify "${ADDR[3]}") # put STDOUT in a temp var, we only need return value
+      if [[ $? = "0" ]] ; then # If we can checkout the reference
         git checkout "${ADDR[3]}" # Checkout the provided reference
       else
         log_critical "*** Warning: Cannot checkout reference ${ADDR[3]}"
+      fi
       cd "${workdir}"
     else
       log_verbose "Latest flag set, skipping checkout for ${ADDR[0]}"
