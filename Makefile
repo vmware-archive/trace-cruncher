@@ -14,14 +14,14 @@ NC	:= '\e[0m'
 DOCDIR = ./docs
 
 CC = gcc
-CFLAGS = -fPIC -Wall -Wextra -O2 -g
-LDFLAGS = -shared -lbfd -lrt
+CFLAGS = -fPIC -Wall -Wextra -O2 -g $(shell python3-config --cflags)
+LDFLAGS = -shared -lbfd -lrt $(shell python3-config --ldflags)
 RM = rm -rf
 
 TC_BASE_LIB = tracecruncher/libtcrunchbase.so
 PY_SETUP = setup
 
-BASE_SRCS = src/trace-obj-debug.c
+BASE_SRCS = src/trace-obj-debug.c src/tcrunch-base.c
 BASE_OBJS = $(BASE_SRCS:.c=.o)
 
 all: $(TC_BASE_LIB) $(PY_SETUP)

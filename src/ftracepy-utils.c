@@ -5,7 +5,6 @@
  */
 
 #ifndef _GNU_SOURCE
-/** Use GNU C Library. */
 #define _GNU_SOURCE
 #endif // _GNU_SOURCE
 
@@ -20,6 +19,7 @@
 #include <time.h>
 
 // trace-cruncher
+#include "tcrunch-base.h"
 #include "ftracepy-utils.h"
 #include "trace-obj-debug.h"
 
@@ -347,39 +347,6 @@ PyObject *PyTepEvent_get_pid(PyTepEvent* self, PyObject *args,
 	return PyLong_FromLong(pid);
 }
 
-static const char *str_from_list(PyObject *py_list, int i)
-{
-	PyObject *item = PyList_GetItem(py_list, i);
-
-	if (!PyUnicode_Check(item))
-		return NULL;
-
-	return PyUnicode_DATA(item);
-}
-
-static const char **get_arg_list(PyObject *py_list)
-{
-	const char **argv = NULL;
-	int i, n;
-
-	if (!PyList_CheckExact(py_list))
-		goto fail;
-
-	n = PyList_Size(py_list);
-	argv = calloc(n + 1, sizeof(*argv));
-	for (i = 0; i < n; ++i) {
-		argv[i] = str_from_list(py_list, i);
-		if (!argv[i])
-			goto fail;
-	}
-
-	return argv;
-
- fail:
-	free(argv);
-	return NULL;
-}
-
 static struct tep_handle *get_tep(const char *dir, const char **sys_names)
 {
 	struct tep_handle *tep;
@@ -412,9 +379,9 @@ PyObject *PyTep_init_local(PyTep *self, PyObject *args,
 	}
 
 	if (system_list) {
-		const char **sys_names = get_arg_list(system_list);
+		const char **sys_names = NULL;
 
-		if (!sys_names) {
+		if (tc_list_get_str(system_list, &sys_names, NULL) || !sys_names) {
 			TfsError_setstr(NULL,
 					"Inconsistent \"systems\" argument.");
 			return NULL;
@@ -860,7 +827,7 @@ PyObject *PyTraceHist_sort_keys(PyTraceHist *self, PyObject *args,
 		int i, n = PyList_Size(py_obj);
 
 		for (i = 0; i < n; ++i) {
-			key = str_from_list(py_obj, i);
+			key = tc_str_from_list(py_obj, i);
 			if (!key ||
 			    !add_sort_key(self->ptrObj, key)) {
 				PyErr_SetString(TRACECRUNCHER_ERROR,
@@ -1780,7 +1747,7 @@ static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 		system = PyUnicode_DATA(py_system);
 		n = PyList_Size(py_events);
 
-		if (n == 0 || (n == 1 && is_all(str_from_list(py_events, 0)))) {
+		if (n == 0 || (n == 1 && is_all(tc_str_from_list(py_events, 0)))) {
 			if (!event_enable_disable(instance, system, NULL,
 						  enable))
 				return false;
@@ -1788,7 +1755,7 @@ static bool set_enable_events(PyObject *self, PyObject *args, PyObject *kwargs,
 		}
 
 		for (i = 0; i < n; ++i) {
-			event = str_from_list(py_events, i);
+			event = tc_str_from_list(py_events, i);
 			if (!event)
 				goto fail_with_err;
 
@@ -2790,7 +2757,7 @@ static struct tracefs_hist *hist_from_key(struct tep_handle *tep,
 		}
 
 		for (i = 0; i < n_keys; ++i) {
-			axes[i].key = str_from_list(py_key, i);
+			axes[i].key = tc_str_from_list(py_key, i);
 			if (!axes[i].key)
 				return NULL;
 
