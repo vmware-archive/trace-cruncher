@@ -8,7 +8,11 @@ Copyright 2021 VMware Inc, Yordan Karadzhov (VMware) <y.karadz@gmail.com>
 
 import os
 import sys
+import time
+import psutil
+import signal
 import unittest
+import subprocess
 import tracecruncher.ftracepy as ft
 import tracecruncher.ft_utils as tc
 
@@ -918,6 +922,50 @@ class SynthOopTestCase(unittest.TestCase):
         split_4 = hist_e.split('trace(')
         self.assertTrue('$' + arg3 in split_4[1])
 
+class CondWaitTestCase(unittest.TestCase):
+    name_test_app = 'testapp/tc-test-app'
+    def test_app_check(self):
+        self.assertTrue(os.path.exists(self.name_test_app))
+        self.assertTrue(os.path.isfile(self.name_test_app))
+        self.assertTrue(os.access(self.name_test_app, os.X_OK))
+    def test_wait_on_time(self):
+        # Run one instance of the test application
+        p1 = subprocess.Popen(self.name_test_app);
+        proc1 = psutil.Process(p1.pid)
 
+        # Wait for 100ms with kill=False and check if the test app still runs
+        tstart = time.time()
+        ft.wait(signals=[], pids=[p1.pid], kill=False, time=100)
+        tend = time.time()
+        self.assertTrue(int(round((tend - tstart) * 1000)) >= 100)
+        time.sleep(0.3)
+        p1stat = proc1.status()
+        self.assertTrue(p1stat == psutil.STATUS_RUNNING or p1stat == psutil.STATUS_SLEEPING)
+
+        # Wait for 200ms with kill=True and check if the test app is gone
+        tstart = time.time()
+        self.assertIsNone(ft.wait(signals=[], pids=[p1.pid], kill=True, time=200))
+        tend = time.time()
+        self.assertTrue(int(round((tend - tstart) * 1000)) >= 200)
+        time.sleep(0.3)
+        p1stat = proc1.status()
+        p1.wait()
+        self.assertTrue(p1stat != psutil.STATUS_RUNNING and p1stat != psutil.STATUS_SLEEPING)
+    def test_wait_on_pid(self):
+        # Run one instance of the test application for 500ms
+        p1 = subprocess.Popen([self.name_test_app, "-t", "500"]);
+        proc1 = psutil.Process(p1.pid)
+
+        # Wait for 5000ms with kill=False and check:
+        #  - the wait time is less than 5s
+        #  - the process is gone
+        tstart = time.time()
+        self.assertIsNone(ft.wait(signals=[], pids=[p1.pid], kill=False, time=5000))
+        tend = time.time()
+        wtime = int(round((tend - tstart) * 1000))
+        self.assertTrue( wtime >= 500 and wtime < 5000)
+        time.sleep(0.3)
+        self.assertFalse(psutil.pid_exists(p1.pid))
+        p1.wait()
 if __name__ == '__main__':
     unittest.main()
