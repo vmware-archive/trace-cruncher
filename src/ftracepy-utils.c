@@ -4173,3 +4173,51 @@ error:
 	}
 	return NULL;
 }
+
+PyObject *PyFtrace_wait(PyObject *self, PyObject *args,
+					PyObject *kwargs)
+{
+	static char *kwlist[] = {"signals", "pids", "kill", "time", NULL};
+	PyObject *signals_list = NULL;
+	const char **signals = NULL;
+	const char *signals_default[] = {"SIGINT", "SIGTERM", NULL};
+	PyObject *pids_list = NULL;
+	unsigned long *pids = NULL;
+	unsigned int time = 0;
+	int npids = 0;
+	int kill = 0;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|OOpI",
+					 kwlist,
+					 &signals_list,
+					 &pids_list,
+					 &kill,
+					 &time)) {
+		return NULL;
+	}
+
+	if (signals_list && tc_list_get_str(signals_list, &signals, NULL)) {
+		TfsError_fmt(pipe_instance,
+			     "Broken list of signals");
+		goto error;
+	}
+
+	if (pids_list && tc_list_get_uint(pids_list, &pids, &npids)) {
+		TfsError_fmt(pipe_instance,
+			     "Broken list of PIDs");
+		goto error;
+	}
+
+	tc_wait_condition(signals_list ? signals : signals_default,
+			  pids, npids, kill, time, NULL, NULL);
+
+	free(signals);
+	free(pids);
+	Py_RETURN_NONE;
+error:
+	free(signals);
+	free(pids);
+	return NULL;
+}
