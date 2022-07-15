@@ -16,5 +16,7 @@
 const char *tc_str_from_list(PyObject *py_list, int i);
 int tc_list_get_str(PyObject *py_list, const char ***strings, int *size);
 int tc_list_get_uint(PyObject *py_list, unsigned long **array, int *size);
+int tc_wait_condition(const char **signals, unsigned long *pids, int pidn, bool terminate,
+		      unsigned long long time, int (*fjob)(void *), void *context);
 
 #endif /* _TC_BASE_H */

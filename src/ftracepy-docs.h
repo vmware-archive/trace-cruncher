@@ -1357,6 +1357,27 @@ PyDoc_STRVAR(PyFtrace_read_trace_doc,
 	     "    The Ftrace instance. This argument is optional. If not provided, the 'top' instance is used.\n"
 	     );
 
+PyDoc_STRVAR(PyFtrace_wait_doc,
+	     "wait(signals, pids, kill, time)\n"
+	     "--\n\n"
+	     "Blocking wait until a condition is met: given signal is received, or all PIDs from the list are terminated, or given time is passed\n"
+	     "\n"
+	     "Parameters\n"
+	     "----------\n"
+	     "signals : List of signals to wait for (optional)\n"
+	     "    A list of POSIX signal names. If any of those signals is received, the function returns."
+	     "    By default, SIGINT and SIGTERM are tracked. Pass an empty list to disable this condition\n"
+	     "pids : List of pids to track (optonal)\n"
+	     "    A list of PIDs to wait for. If all PIDs from this list are terminated, the function returns."
+	     "    By default no PIDs are tracked."
+	     "kill : Boolean, whether to kill tasks from pids list (optonal)\n"
+	     "    If true is passed and if a pids list is provided, before the funcion exit all"
+	     "    not-terminated tasks from pids list are killed, using the SIGTERM signal."
+	     "    By default this behaviour is disabled."
+	     "time : Time, in msec to wait (optonal)\n"
+	     "    If time is provided, the function waits for given number of miliseconds before return."
+	     );
+
 PyDoc_STRVAR(PyFtrace_iterate_trace_doc,
 	     "iterate_trace(plugin='__main__', callback='callback', instance)\n"
 	     "--\n\n"
