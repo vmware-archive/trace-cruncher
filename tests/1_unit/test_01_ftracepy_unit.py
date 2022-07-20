@@ -935,7 +935,7 @@ class CondWaitTestCase(unittest.TestCase):
 
         # Wait for 100ms with kill=False and check if the test app still runs
         tstart = time.time()
-        ft.wait(signals=[], pids=[p1.pid], kill=False, time=100)
+        self.assertIsNone(ft.wait(signals=[], pids=[p1.pid], kill=False, time=100))
         tend = time.time()
         self.assertTrue(int(round((tend - tstart) * 1000)) >= 100)
         time.sleep(0.3)
