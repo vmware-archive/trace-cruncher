@@ -320,7 +320,7 @@ int tc_wait_condition(const char **signals, unsigned long *pids, int pidn, bool 
 						sh_pids[i] = 0;
 				} else if (kill(sh_pids[i], 0) == -1 && errno == ESRCH) {
 					/* Not a child, check if still exist. */
-					sh_pids[i] = -1;
+					sh_pids[i] = 0;
 				}
 				break;
 			}
