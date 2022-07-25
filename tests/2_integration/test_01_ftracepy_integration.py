@@ -15,8 +15,6 @@ class InstanceTestCase(unittest.TestCase):
     def test_create_instance(self):
         tracefs_dir = ft.dir()
         instances_dir = tracefs_dir + '/instances/'
-        self.assertEqual(len(os.listdir(instances_dir)), 0)
-
         for i in range(25) :
             instance_name = 'test_instance_%s' % i
             inst = ft.create_instance(instance_name)
