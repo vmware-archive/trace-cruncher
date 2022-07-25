@@ -19,7 +19,7 @@ class CompileTestApp(unittest.TestCase):
         if os.path.exists(test_app):
             self.assertTrue(os.path.isfile(test_app))
             os.remove(test_app)
-        cmd = ["gcc", test_app + ".c", "-o", test_app];
+        cmd = ["gcc", test_app + ".c", "-lrt", "-o", test_app];
         p = subprocess.Popen(cmd);
         p.wait();
         self.assertTrue(p.returncode == 0)
