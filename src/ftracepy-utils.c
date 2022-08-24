@@ -1839,19 +1839,21 @@ PyObject *PyFtrace_event_is_enabled(PyObject *self, PyObject *args,
 PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
 						    PyObject *kwargs)
 {
-	const char *system, *event, *filter;
+	const char *system, *filter;
+	char *event = NULL;
 	struct tracefs_instance *instance;
 	PyObject *py_inst = NULL;
 	char path[PATH_MAX];
+	bool ret;
 
-	static char *kwlist[] = {"system", "event", "filter", "instance", NULL};
+	static char *kwlist[] = {"system", "filter", "event", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "sss|O",
+					 "ss|sO",
 					 kwlist,
 					 &system,
-					 &event,
 					 &filter,
+					 &event,
 					 &py_inst)) {
 		return NULL;
 	}
@@ -1859,8 +1861,21 @@ PyObject *PyFtrace_set_event_filter(PyObject *self, PyObject *args,
 	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
-	sprintf(path, "events/%s/%s/filter", system, event);
-	if (!write_to_file_and_check(instance, path, filter)) {
+	if (event) {
+		sprintf(path, "events/%s/%s/filter", system, event);
+		ret = write_to_file_and_check(instance, path, filter);
+	} else {
+		/*
+		 * Filters written to system's filter file are not stored in this file.
+		 * Instead, they are sent to each event's filter file from that system,
+		 * which has the fields from the filter.
+		 * That's why write_to_file_and_check() API cannot be used in this case.
+		 */
+		sprintf(path, "events/%s/filter", system);
+		ret = (write_to_file(instance, path, filter) > 0);
+	}
+
+	if (!ret) {
 		TfsError_setstr(instance, "Failed to set event filter");
 		return NULL;
 	}
@@ -1873,13 +1888,14 @@ PyObject *PyFtrace_clear_event_filter(PyObject *self, PyObject *args,
 {
 	struct tracefs_instance *instance;
 	PyObject *py_inst = NULL;
-	const char *system, *event;
+	const char *system;
+	char *event = NULL;
 	char path[PATH_MAX];
 
 	static char *kwlist[] = {"system", "event", "instance", NULL};
 	if (!PyArg_ParseTupleAndKeywords(args,
 					 kwargs,
-					 "ss|O",
+					 "s|sO",
 					 kwlist,
 					 &system,
 					 &event,
@@ -1890,7 +1906,10 @@ PyObject *PyFtrace_clear_event_filter(PyObject *self, PyObject *args,
 	if (!get_optional_instance(py_inst, &instance))
 		return NULL;
 
-	sprintf(path, "events/%s/%s/filter", system, event);
+	if (event)
+		sprintf(path, "events/%s/%s/filter", system, event);
+	else
+		sprintf(path, "events/%s/filter", system);
 	if (!write_to_file(instance, path, OFF)) {
 		TfsError_setstr(instance, "Failed to clear event filter");
 		return NULL;
