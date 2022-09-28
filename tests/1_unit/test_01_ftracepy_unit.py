@@ -27,6 +27,19 @@ class InstanceTestCase(unittest.TestCase):
         instances_dir = tracefs_dir + '/instances/'
         self.assertTrue(os.path.isdir(instances_dir))
 
+    def test_custom_dir(self):
+        custom_dir="/tmp"
+        tracefs_dir = ft.dir()
+        self.assertTrue(os.path.isdir(tracefs_dir))
+        ft.set_dir(custom_dir)
+        user_dir = ft.dir()
+        self.assertTrue(os.path.isdir(user_dir))
+        self.assertEqual(custom_dir, user_dir);
+        ft.set_dir("")
+        def_dir = ft.dir()
+        self.assertTrue(os.path.isdir(def_dir))
+        self.assertEqual(tracefs_dir, def_dir);
+
     def test_create_instance(self):
         inst = ft.create_instance(instance_name)
         self.assertTrue(ft.is_tracing_ON(inst))
