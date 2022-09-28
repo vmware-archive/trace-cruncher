@@ -354,7 +354,7 @@ static struct tep_handle *get_tep(const char *dir, const char **sys_names)
 	tep = tracefs_local_events_system(dir, sys_names);
 	if (!tep) {
 		TfsError_fmt(NULL,
-			     "Failed to get local 'tep' event from %s", dir);
+			     "Failed to get local 'tep' event from %s", dir?dir:"N/A");
 		return NULL;
 	}
 
@@ -1292,6 +1292,33 @@ PyObject *PySynthEvent_repr(PySynthEvent *self, PyObject *args, PyObject *kwargs
 PyObject *PyFtrace_dir(PyObject *self)
 {
 	return PyUnicode_FromString(tracefs_tracing_dir());
+}
+
+PyObject *PyFtrace_set_dir(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	static char *kwlist[] = {"path", NULL};
+	char *custom_dir = NULL;
+	int ret;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|s",
+					 kwlist,
+					 &custom_dir)) {
+		return NULL;
+	}
+
+	if (custom_dir && custom_dir[0] != '\0')
+		ret = tracefs_set_tracing_dir(custom_dir);
+	else
+		ret = tracefs_set_tracing_dir(NULL);
+
+	if (ret) {
+		TfsError_setstr(NULL, "Failed to set custom ftrace directory.");
+		return NULL;
+	}
+
+	Py_RETURN_NONE;
 }
 
 static PyObject *set_destroy(PyObject *args, PyObject *kwargs, bool destroy)

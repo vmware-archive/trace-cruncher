@@ -184,6 +184,8 @@ PyObject *PySynthEvent_repr(PySynthEvent *self, PyObject *args, PyObject *kwargs
 
 PyObject *PyFtrace_dir(PyObject *self);
 
+PyObject *PyFtrace_set_dir(PyObject *self, PyObject *args, PyObject *kwargs);
+
 PyObject *PyFtrace_detach(PyObject *self, PyObject *args, PyObject *kwargs);
 
 PyObject *PyFtrace_attach(PyObject *self, PyObject *args, PyObject *kwargs);

@@ -704,6 +704,18 @@ PyDoc_STRVAR(PyFtrace_dir_doc,
 	     "\n"
 );
 
+PyDoc_STRVAR(PyFtrace_set_dir_doc,
+	     "set_dir(path)\n"
+	     "--\n\n"
+	     "Set custom path to the 'tracefs' directory.\n"
+	     "\n"
+	     "Parameters\n"
+	     "----------\n"
+	     "path : string\n"
+	     "    Full path to the ftrace directory mount point\n"
+	     "\n"
+);
+
 PyDoc_STRVAR(PyFtrace_detach_doc,
 	     "detach(object)\n"
 	     "--\n\n"
