@@ -138,19 +138,20 @@ static void TfsError_fmt(struct tracefs_instance *instance,
 	if (tfs_err_log) {
 		char *tc_err_log;
 
-		vasprintf(&tc_err_log, fmt, args);
-		va_end(args);
+		if (vasprintf(&tc_err_log, fmt, args) <= 0)
+			goto out;
 
 		PyErr_Format(TFS_ERROR, "%s\ntfs_error: %s",
 			     tc_err_log, tfs_err_log);
 
 		tfs_clear_error_log(instance);
-		free(tfs_err_log);
 		free(tc_err_log);
 	} else {
 		PyErr_FormatV(TFS_ERROR, fmt, args);
-		va_end(args);
 	}
+out:
+	free(tfs_err_log);
+	va_end(args);
 }
 
 static void TfsError_setstr(struct tracefs_instance *instance,
@@ -3781,11 +3782,12 @@ static char *uprobe_event_name(char *file, char *func, int type)
 	if (!fname || *fname == '\0')
 		fname = file;
 
-	asprintf(&event, "%s%.*s_%.*s",
-		 type == FTRACE_URETPROBE ? "r_":"",
-		 FILENAME_TRUNCATE, fname, FUNCAME_TRUNCATE, func);
-	if (event)
-		fname_unify(event);
+	if (asprintf(&event, "%s%.*s_%.*s", type == FTRACE_URETPROBE ? "r_":"",
+		     FILENAME_TRUNCATE, fname, FUNCAME_TRUNCATE, func) <= 0) {
+		return NULL;
+	}
+
+	fname_unify(event);
 
 	return event;
 }
