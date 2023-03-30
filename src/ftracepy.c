@@ -646,9 +646,8 @@ PyMODINIT_FUNC PyInit_ftracepy(void)
 	PyModule_AddObject(module, "tc_error", TRACECRUNCHER_ERROR);
 
 	if (geteuid() != 0) {
-		PyErr_SetString(TFS_ERROR,
-				"Permission denied. Root privileges are required.");
-		return NULL;
+		PyErr_WarnEx(TFS_ERROR,
+			     "Permission alert - access to the tracing subsystem requires root privileges.", 1);
 	}
 
 	Py_AtExit(PyFtrace_at_exit);
