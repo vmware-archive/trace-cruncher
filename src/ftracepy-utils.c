@@ -764,6 +764,26 @@ PyObject *PyTfsInstance_dir(PyTfsInstance *self)
 	return PyUnicode_FromString(tracefs_instance_get_dir(self->ptrObj));
 }
 
+PyObject *PyTfsInstance_reset(PyTfsInstance *self)
+{
+	tracefs_instance_reset(self->ptrObj);
+	Py_RETURN_NONE;
+}
+
+int py_instance_destroy(struct tracefs_instance *instance)
+{
+	tracefs_instance_reset(instance);
+	tracefs_instance_destroy(instance);
+	return 0;
+}
+
+PyObject *PyTfsInstance_delete(PyTfsInstance *self)
+{
+	py_instance_destroy(self->ptrObj);
+
+	Py_RETURN_NONE;
+}
+
 PyObject *PyTraceHist_add_value(PyTraceHist *self, PyObject *args,
 						   PyObject *kwargs)
 {

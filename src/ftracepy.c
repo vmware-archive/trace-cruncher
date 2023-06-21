@@ -101,11 +101,21 @@ static PyMethodDef PyTfsInstance_methods[] = {
 	 METH_NOARGS,
 	 PyTfsInstance_dir_doc,
 	},
+	{"reset",
+	 (PyCFunction) PyTfsInstance_reset,
+	 METH_NOARGS,
+	 PyTfsInstance_reset_doc,
+	},
+	{"delete",
+	 (PyCFunction) PyTfsInstance_delete,
+	 METH_NOARGS,
+	 PyTfsInstance_delete_doc,
+	},
 	{NULL, NULL, 0, NULL}
 };
 
 C_OBJECT_WRAPPER(tracefs_instance, PyTfsInstance,
-		 tracefs_instance_destroy,
+		 py_instance_destroy,
 		 tracefs_instance_free)
 
 static PyMethodDef PyDynevent_methods[] = {

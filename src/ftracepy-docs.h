@@ -218,6 +218,18 @@ PyDoc_STRVAR(PyTfsInstance_dir_doc,
 	     "\n"
 );
 
+PyDoc_STRVAR(PyTfsInstance_reset_doc,
+	     "reset()\n"
+	     "--\n\n"
+	     "Reset a Ftrace instance to its default state.\n"
+);
+
+PyDoc_STRVAR(PyTfsInstance_delete_doc,
+	     "delete()\n"
+	     "--\n\n"
+	     "Reset a Ftrace instance to its default state and delete it from the system\n"
+);
+
 PyDoc_STRVAR(PyDynevent_event_doc,
 	     "event()\n"
 	     "--\n\n"
