@@ -554,6 +554,11 @@ static PyMethodDef ftracepy_methods[] = {
 	 METH_VARARGS | METH_KEYWORDS,
 	 "Create a context for tracing a user process using uprobes"
 	},
+	{"available_dynamic_events",
+	 (PyCFunction) PyFtrace_available_dynamic_events,
+	 METH_VARARGS | METH_KEYWORDS,
+	 PyFtrace_available_dynamic_events_doc,
+	},
 	{"set_ftrace_loglevel",
 	 (PyCFunction) PyFtrace_set_ftrace_loglevel,
 	 METH_VARARGS | METH_KEYWORDS,

@@ -1327,6 +1327,26 @@ PyDoc_STRVAR(PyFtrace_synth_doc,
 	     "                 match_name='pid')"
 );
 
+PyDoc_STRVAR(PyFtrace_available_dynamic_events_doc,
+	     "available_dynamic_events(types)\n"
+	     "--\n\n"
+	     "Get list of dynamic events in the system."
+	     "By default, the dynamic events of all types are returned."
+	     "When the list is destroyed, the events are not deleted from the system.\n"
+	     "\n"
+	     "Parameters\n"
+	     "----------\n"
+	     "types : string\n"
+	     "    String with requested types of dynamic events, optional."
+	     "The following types are supported:\n"
+	     "     kprobe\n"
+	     "     kretprobe\n"
+	     "     uprobe\n"
+	     "     uretprobe\n"
+	     "     eprobe\n"
+	     "     synthetic\n"
+);
+
 PyDoc_STRVAR(PyFtrace_set_ftrace_loglevel_doc,
 	     "set_ftrace_loglevel(level)\n"
 	     "--\n\n"

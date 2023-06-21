@@ -293,6 +293,8 @@ PyObject *PyFtrace_hist(PyObject *self, PyObject *args,
 PyObject *PyFtrace_synth(PyObject *self, PyObject *args,
 					 PyObject *kwargs);
 
+PyObject *PyFtrace_available_dynamic_events(PyObject *self, PyObject *args, PyObject *kwargs);
+
 PyObject *PyFtrace_set_ftrace_loglevel(PyObject *self, PyObject *args,
 						       PyObject *kwargs);
 

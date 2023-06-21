@@ -4276,6 +4276,57 @@ error:
 	return NULL;
 }
 
+PyObject *PyFtrace_available_dynamic_events(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	static char *kwlist[] = {"type", NULL};
+	struct tracefs_dynevent **all;
+	const char *type = NULL;
+	unsigned int filter = 0;
+	PyObject *list, *py_dyn;
+	int i;
+
+	if (!PyArg_ParseTupleAndKeywords(args,
+					 kwargs,
+					 "|s",
+					 kwlist,
+					 &type)) {
+		return NULL;
+	}
+
+	if (type) {
+		if (strstr(type, "kprobe"))
+			filter |= TRACEFS_DYNEVENT_KPROBE;
+		if (strstr(type, "kretprobe"))
+			filter |= TRACEFS_DYNEVENT_KRETPROBE;
+		if (strstr(type, "uprobe"))
+			filter |= TRACEFS_DYNEVENT_UPROBE;
+		if (strstr(type, "uretprobe"))
+			filter |= TRACEFS_DYNEVENT_URETPROBE;
+		if (strstr(type, "eprobe"))
+			filter |= TRACEFS_DYNEVENT_EPROBE;
+		if (strstr(type, "synthetic"))
+			filter |= TRACEFS_DYNEVENT_SYNTH;
+	}
+
+	list = PyList_New(0);
+	all = tracefs_dynevent_get_all(filter, NULL);
+	if (all) {
+		for (i = 0; all[i]; i++) {
+			py_dyn = PyDynevent_New(all[i]);
+			/* Do not destroy the event in the system, as we did not create it */
+			set_destroy_flag(py_dyn, false);
+			PyList_Append(list, py_dyn);
+		}
+		/* Do not free the list with tracefs_dynevent_list_free(),
+		 * as it frees all items from the list. We need the dynamic events,
+		 * only the list must be freed.
+		 */
+		free(all);
+	}
+
+	return list;
+}
+
 PyObject *PyFtrace_wait(PyObject *self, PyObject *args,
 					PyObject *kwargs)
 {
