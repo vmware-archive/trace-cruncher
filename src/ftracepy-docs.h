@@ -587,9 +587,13 @@ PyDoc_STRVAR(PySynthEvent_add_sum_doc,
 );
 
 PyDoc_STRVAR(PySynthEvent_register_doc,
-	     "register()\n"
+	     "register(instance)\n"
 	     "--\n\n"
 	     "Register synthetic event.\n"
+	     "Parameters\n"
+	     "----------\n"
+	     "instance : PyTfsInstance (optional)\n"
+	     "    The Ftrace instance to be used. This argument is optional. If not provided, the 'top' instance is used.\n"
 );
 
 PyDoc_STRVAR(PySynthEvent_unregister_doc,
