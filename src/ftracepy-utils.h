@@ -24,6 +24,8 @@ C_OBJECT_WRAPPER_DECLARE(tep_handle, PyTep)
 
 C_OBJECT_WRAPPER_DECLARE(tracefs_instance, PyTfsInstance)
 
+int py_instance_destroy(struct tracefs_instance *instance);
+
 struct tracefs_dynevent;
 
 C_OBJECT_WRAPPER_DECLARE(tracefs_dynevent, PyDynevent);
@@ -82,6 +84,10 @@ PyObject *PyTep_short_kprobe_print(PyTep *self, PyObject *args,
 						PyObject *kwargs);
 
 PyObject *PyTfsInstance_dir(PyTfsInstance *self);
+
+PyObject *PyTfsInstance_reset(PyTfsInstance *self);
+
+PyObject *PyTfsInstance_delete(PyTfsInstance *self);
 
 PyObject *PyDynevent_event(PyDynevent *self);
 
