@@ -33,6 +33,14 @@ $(PY_SETUP):
 $(TC_BASE_LIB): $(BASE_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+test:
+ifneq ($(UID), 0)
+	$(error Unit tests must be executed with root privileges, access to the ftrace system is required)
+endif
+	$(warning trace-cruncher under test must be installed on the system before running these tests.)
+	$(info Running unit tests:)
+	cd tests && python3 -m unittest discover .
+
 clean:
 	${RM} src/npdatawrapper.c
 	${RM} $(TC_BASE_LIB)
