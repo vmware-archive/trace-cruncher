@@ -1226,8 +1226,14 @@ static void set_destroy_flag(PyObject *py_obj, bool val)
 	obj_head->destroy = val;
 }
 
-PyObject *PySynthEvent_register(PySynthEvent *self)
+PyObject *PySynthEvent_register(PySynthEvent *self, PyObject *args, PyObject *kwargs)
 {
+	struct tracefs_instance *instance;
+
+	if (!get_instance_from_arg(args, kwargs, &instance))
+		return NULL;
+
+	tracefs_synth_set_instance(self->ptrObj, instance);
 	if (tracefs_synth_create(self->ptrObj) < 0) {
 		TfsError_fmt(NULL, "Failed to register synth. event %s",
 			     tracefs_synth_get_name(self->ptrObj));

@@ -164,7 +164,7 @@ PyObject *PySynthEvent_add_delta_T(PySynthEvent *self, PyObject *args,
 PyObject *PySynthEvent_add_sum(PySynthEvent *self, PyObject *args,
 						   PyObject *kwargs);
 
-PyObject *PySynthEvent_register(PySynthEvent *self);
+PyObject *PySynthEvent_register(PySynthEvent *self, PyObject *args, PyObject *kwargs);
 
 PyObject *PySynthEvent_unregister(PySynthEvent *self);
 

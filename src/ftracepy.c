@@ -277,7 +277,7 @@ static PyMethodDef PySynthEvent_methods[] = {
 	},
 	{"register",
 	 (PyCFunction) PySynthEvent_register,
-	 METH_NOARGS,
+	 METH_VARARGS | METH_KEYWORDS,
 	 PySynthEvent_register_doc,
 	},
 	{"unregister",
