@@ -39,8 +39,8 @@ def add_library(lib, min_version,
 def third_party_paths():
     library_dirs = ['$ORIGIN','tracecruncher']
     include_dirs = [np.get_include()]
-    libs_required = [('libtraceevent', '1.5.0'),
-                     ('libtracefs',    '1.4.1'),
+    libs_required = [('libtraceevent', '1.7.3'),
+                     ('libtracefs',    '1.7.0'),
                      ('libkshark',     '2.0.1')]
     libs_found = []
 
