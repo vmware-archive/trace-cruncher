@@ -1490,6 +1490,34 @@ PyObject *PyFtrace_find_instance(PyObject *self, PyObject *args,
 	return py_inst;
 }
 
+static int save_instace(const char *name, void *context)
+{
+	PyObject **list = (PyObject **)context;
+	struct tracefs_instance *instance;
+	PyObject *py_inst;
+
+	instance = tracefs_instance_alloc(NULL, name);
+	if (instance) {
+		py_inst = PyTfsInstance_New(instance);
+		/* Do not destroy the instance in the system, as we did not create it */
+		set_destroy_flag(py_inst, false);
+		PyList_Append(*list, py_inst);
+	}
+
+	return 0;
+}
+
+PyObject *PyFtrace_available_instances(PyObject *self, PyObject *args,
+						       PyObject *kwargs)
+{
+	PyObject *list;
+
+	list = PyList_New(0);
+	if (tracefs_instances_walk(save_instace, &list) < 0)
+		return NULL;
+	return list;
+}
+
 PyObject *PyFtrace_available_tracers(PyObject *self, PyObject *args,
 						     PyObject *kwargs)
 {

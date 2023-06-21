@@ -801,6 +801,17 @@ PyDoc_STRVAR(PyFtrace_find_instance_doc,
 	     "    The returned objects is detached from the 'ftracepy' module."
 );
 
+PyDoc_STRVAR(PyFtrace_available_instances_doc,
+	     "available_instances()\n"
+	     "--\n\n"
+	     "Get a list of all trace instances available on the system.\n"
+	     "\n"
+	     "Returns\n"
+	     "-------\n"
+	     "instances : List of instances\n"
+	     "    List of all available instances."
+);
+
 PyDoc_STRVAR(PyFtrace_available_tracers_doc,
 	     "available_tracers()\n"
 	     "--\n\n"
