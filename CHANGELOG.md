@@ -1,3 +1,23 @@
+## [Release v0.4.0](https://github.com/vmware/trace-cruncher/compare/tracecruncher-v0.3.0...tracecruncher-v0.4.0)
+
+> Release Date: 2023-06-26
+
+ ### API Changes
+- [40f3340b]	trace-cruncher: New API to get available dynamic events
+- [edc58ef3]	trace-cruncher: New API to get available trace instances
+- [71c5305e]	trace-cruncher: Improve synthetic events creation
+- [03a87012]	trace-cruncher: Improve trace instance deletion
+
+ ### Tests
+- [c590c196]	trace-cruncher: Makefile target for unit tests
+
+ ### Chore
+- [3a4e9ebb]	trace-cruncher: Bump the versions of required trace libraries
+- [02f9b380]	trace-cruncher: Fixed compilation warnings
+- [461c340e]	trace-cruncher: Replace permission error with warning
+- [882ab136]	trace-cruncher: Update dependences
+- [4f028cf5]	tracetrace-cruncher: Update github workflow
+
 ## [Release v0.3.0](https://github.com/vmware/trace-cruncher/compare/tracecruncher-v0.2.0...tracecruncher-v0.3.0)
 
 > Release Date: 2022-11-22
