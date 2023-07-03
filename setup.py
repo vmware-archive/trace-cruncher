@@ -83,7 +83,7 @@ def main():
                           libraries=['kshark'])
 
     setup(name='tracecruncher',
-          version='0.4.0',
+          version='0.4.1',
           description='Interface for accessing Linux tracing data in Python.',
           author='Yordan Karadzhov (VMware)',
           author_email='y.karadz@gmail.com',

@@ -1,4 +1,8 @@
-## [Release v0.4.0](https://github.com/vmware/trace-cruncher/compare/tracecruncher-v0.3.0...tracecruncher-v0.4.0)
+## [Release v0.4.1](https://github.com/vmware/trace-cruncher/compare/tracecruncher-v0.3.0...tracecruncher-v0.4.1)
+
+> Release Date: 2023-07-03
+ ### Chore
+- [02539f0d]   trace-cruncher: Fixed libtracefs version
 
 > Release Date: 2023-06-26
 
